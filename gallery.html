@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CharacterVerse — Character Gallery</title>
+  <meta name="description" content="Browse CharacterVerse default characters and add them to your chat." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="gallery.css" />
+</head>
+<body>
+  <div class="gallery-page">
+    <header class="gallery-topbar">
+      <button class="gt-btn" onclick="location.href='index.html'" title="Back to chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      <div class="gt-brand">
+        <div class="gt-logo">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="url(#ggrad)" stroke-width="1.5" />
+            <path d="M7 12c0-2.76 2.24-5 5-5s5 2.24 5 5-2.24 5-5 5" stroke="url(#ggrad)" stroke-width="1.5" stroke-linecap="round" />
+            <circle cx="12" cy="12" r="2.5" fill="url(#ggrad)" />
+            <defs>
+              <linearGradient id="ggrad" x1="0" y1="0" x2="24" y2="24">
+                <stop offset="0%" stop-color="#a78bfa" />
+                <stop offset="100%" stop-color="#60a5fa" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="gt-title">
+          <div class="gt-name">CharacterVerse</div>
+          <div class="gt-sub">Character Gallery</div>
+        </div>
+      </div>
+
+      <div class="gt-right">
+        <div class="gt-pill" id="gt-count">0 loaded</div>
+      </div>
+    </header>
+
+    <main class="gallery-main">
+      <div class="gallery-hero">
+        <h1 class="gallery-h1">Pick a character, copy the code, or jump straight into chat.</h1>
+        <p class="gallery-p">Cards load in random order, without repeats. Scroll to load more.</p>
+      </div>
+
+      <section class="gallery-grid" id="gallery-grid"></section>
+
+      <div class="gallery-sentinel" id="gallery-sentinel">
+        <div class="sentinel-spinner"></div>
+        <div class="sentinel-text" id="sentinel-text">Loading…</div>
+      </div>
+
+      <div class="gallery-empty hidden" id="gallery-empty">
+        <div class="gallery-empty-icon">🪐</div>
+        <div class="gallery-empty-title">No characters found</div>
+        <div class="gallery-empty-sub">Check your gallery.json data.</div>
+      </div>
+    </main>
+
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script src="gallery.js"></script>
+</body>
+</html>
