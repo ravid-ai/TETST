@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CharacterVerse — Character Gallery</title>
+    <meta name="description"
+        content="Browse and discover AI characters for CharacterVerse. Copy character codes or add them directly to your chat." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="gallery.css" />
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="gallery-header">
+        <div class="gallery-header-inner">
+            <a href="index.html" class="gallery-brand">
+                <div class="gallery-brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="url(#ggrad)" stroke-width="1.5" />
+                        <path d="M7 12c0-2.76 2.24-5 5-5s5 2.24 5 5-2.24 5-5 5" stroke="url(#ggrad)" stroke-width="1.5"
+                            stroke-linecap="round" />
+                        <circle cx="12" cy="12" r="2.5" fill="url(#ggrad)" />
+                        <defs>
+                            <linearGradient id="ggrad" x1="0" y1="0" x2="24" y2="24">
+                                <stop offset="0%" stop-color="#a78bfa" />
+                                <stop offset="100%" stop-color="#60a5fa" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="gallery-brand-text">CharacterVerse</span>
+            </a>
+            <div class="gallery-header-center">
+                <h1 class="gallery-title">Character Gallery</h1>
+                <p class="gallery-subtitle">Discover & collect AI characters</p>
+            </div>
+            <a href="index.html" class="gallery-back-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Back to Chat
+            </a>
+        </div>
+    </header>
+
+    <!-- ===== GALLERY GRID ===== -->
+    <main class="gallery-main">
+        <div class="gallery-grid" id="gallery-grid"></div>
+
+        <!-- Loading Spinner -->
+        <div class="gallery-loader" id="gallery-loader">
+            <div class="gallery-spinner"></div>
+            <span>Loading characters...</span>
+        </div>
+
+        <!-- End Message -->
+        <div class="gallery-end hidden" id="gallery-end">
+            <div class="gallery-end-icon">✨</div>
+            <p>You've seen all characters!</p>
+            <a href="index.html" class="gallery-end-link">Create your own →</a>
+        </div>
+    </main>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="gallery-toast-container" class="gallery-toast-container"></div>
+
+    <!-- ===== BACKGROUND ORBS ===== -->
+    <div class="gallery-orb gallery-orb-1"></div>
+    <div class="gallery-orb gallery-orb-2"></div>
+
+    <script src="gallery.js"></script>
+</body>
+
+</html>
