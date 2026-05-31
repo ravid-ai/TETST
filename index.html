@@ -938,6 +938,19 @@
                 </div>
 
                 <div id="settings-privacy" class="settings-panel">
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Backup & Restore</div>
+                            <div class="setting-desc">Export all CharacterVerse data or import a saved backup</div>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                            <button class="btn-secondary sm" onclick="exportFullBackup()">Export Backup</button>
+                            <button class="btn-ghost sm" onclick="triggerBackupImport()">Import Backup</button>
+                            <input type="file" id="backup-file-input" accept=".json,application/json" class="hidden"
+                                onchange="handleBackupImport(event)" />
+                        </div>
+                    </div>
                     <div class="setting-item danger-zone">
                         <div class="setting-info">
                             <div class="setting-name">Clear All Chat History</div>
@@ -992,6 +1005,57 @@
                 <polyline points="3,6 5,6 21,6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>Delete</button>
+    </div>
+
+    <!-- MESSAGE ACTIONS MENU -->
+    <div id="message-actions-menu" class="context-menu message-actions-menu hidden" onclick="event.stopPropagation()">
+        <button onclick="messageAction('copy')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="9" y="9" width="10" height="10" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy
+        </button>
+        <button onclick="messageAction('delete')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete
+        </button>
+        <div class="context-divider"></div>
+        <button onclick="messageAction('branch')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M6 4v16"></path>
+                <path d="M6 12h7a4 4 0 0 1 4 4v4"></path>
+                <circle cx="6" cy="4" r="1.5" fill="currentColor" stroke="none"></circle>
+                <circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>
+                <circle cx="17" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+            </svg>
+            Branch chat
+        </button>
+    </div>
+
+    <!-- DELETE MESSAGE MODAL -->
+    <div id="message-delete-modal" class="modal-backdrop hidden message-delete-modal">
+        <div class="modal-container message-delete-container">
+            <div class="modal-header">
+                <h2>Delete Message</h2>
+                <button class="modal-close-btn" onclick="closeDeleteMessageModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="message-delete-helper">Choose whether to delete just the selected message pair or trim the conversation from this point onward.</p>
+                <div class="message-delete-preview" id="delete-message-preview"></div>
+            </div>
+            <div class="modal-footer message-delete-options">
+                <button class="btn-secondary" onclick="deleteSelectedMessage('single')">Delete this message only</button>
+                <button class="btn-danger" onclick="deleteSelectedMessage('fromHere')">Delete from here onward</button>
+            </div>
+        </div>
     </div>
 
     <!-- TOAST CONTAINER -->

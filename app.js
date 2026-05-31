@@ -9,7 +9,8 @@ const state = {
         historyLimit: 20, showTimestamps: true, roleplayEnhancer: true,
         theme: 'dark', fontSize: 15, animations: true, streamSpeed: 18
     },
-    tags: [], contextMenuTarget: null, isGenerating: false
+    tags: [], contextMenuTarget: null, messageMenuTarget: null, deleteMessageTarget: null,
+    activeChatId: null, chatMeta: {}, isGenerating: false
 };
 
 // ===== CHARACTER CODEC (Base64 Import/Export) =====
@@ -158,6 +159,10 @@ function loadSavedData() {
         if (chars) state.characters = JSON.parse(chars);
         const hist = localStorage.getItem('cv_history');
         if (hist) state.chatHistory = JSON.parse(hist);
+        const chatMeta = localStorage.getItem('cv_chat_meta');
+        if (chatMeta) state.chatMeta = JSON.parse(chatMeta);
+        const activeChatId = localStorage.getItem('cv_active_chat_id');
+        if (activeChatId) state.activeChatId = activeChatId;
         const sett = localStorage.getItem('cv_settings');
         if (sett) state.settings = { ...state.settings, ...JSON.parse(sett) };
         const prof = localStorage.getItem('cv_profile');
@@ -174,9 +179,79 @@ function saveData() {
         localStorage.setItem('cv_api_model', state.apiModel);
         localStorage.setItem('cv_characters', JSON.stringify(state.characters));
         localStorage.setItem('cv_history', JSON.stringify(state.chatHistory));
+        localStorage.setItem('cv_chat_meta', JSON.stringify(state.chatMeta));
+        localStorage.setItem('cv_active_chat_id', state.activeChatId || '');
         localStorage.setItem('cv_settings', JSON.stringify(state.settings));
         localStorage.setItem('cv_profile', JSON.stringify(state.profile));
     } catch (e) { console.error('Save error:', e); }
+}
+
+function getActiveChatId() {
+    return state.activeChatId || state.activeCharId || null;
+}
+
+function getActiveChatHistory() {
+    const chatId = getActiveChatId();
+    return chatId ? (state.chatHistory[chatId] || []) : [];
+}
+
+function getCharacterById(id) {
+    return state.characters[id] || FEATURED.find(f => f.id === id) || null;
+}
+
+function getCharacterForChat(chatId = getActiveChatId()) {
+    const meta = chatId ? state.chatMeta[chatId] : null;
+    return getCharacterById(meta?.characterId || state.activeCharId);
+}
+
+function getInitialChatIdForCharacter(charId) {
+    const savedChatId = state.activeChatId;
+    if (savedChatId && (savedChatId === charId || state.chatMeta[savedChatId]?.characterId === charId)) return savedChatId;
+    const persisted = localStorage.getItem('cv_active_chat_id');
+    if (persisted && (persisted === charId || state.chatMeta[persisted]?.characterId === charId)) return persisted;
+    return charId;
+}
+
+function cloneMessages(messages) {
+    if (typeof structuredClone === 'function') return structuredClone(messages);
+    return JSON.parse(JSON.stringify(messages));
+}
+
+function normalizeBranchBaseName(name = '') {
+    const raw = String(name || '').trim();
+    if (!raw) return 'Branch';
+    const cleaned = raw.replace(/\s*[-–—•·]?\s*Branch(?:\s*\d+)?$/i, '').trim();
+    return cleaned || raw;
+}
+
+function makeUniqueBranchName(baseName) {
+    const rootName = normalizeBranchBaseName(baseName);
+    const existing = Object.values(state.characters)
+        .filter(c => c && c.isBranchChat && normalizeBranchBaseName(c.name) === rootName)
+        .map(c => c.name);
+
+    const first = `${rootName} - Branch`;
+    if (!existing.includes(first)) return first;
+
+    let suffix = 2;
+    while (existing.includes(`${rootName} - Branch ${suffix}`)) suffix += 1;
+    return `${rootName} - Branch ${suffix}`;
+}
+
+function getChatMeta(chatId) {
+    return chatId ? (state.chatMeta[chatId] || null) : null;
+}
+
+function getBaseCharacterForChat(chatId) {
+    const meta = getChatMeta(chatId);
+    const sourceId = meta?.sourceCharacterId || meta?.parentCharacterId || meta?.characterId || chatId;
+    return getCharacterById(sourceId);
+}
+
+function makeMessageSnippet(text, maxLen = 72) {
+    const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!cleaned) return '';
+    return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
 }
 
 function renderApp() {
@@ -187,8 +262,21 @@ function renderApp() {
     const model = state.apiModel;
     const badge = document.getElementById('topbar-model-badge');
     if (badge && model) badge.textContent = model.split('-').slice(0, 2).join('-');
+
+    const savedActiveChatId = state.activeChatId || localStorage.getItem('cv_active_chat_id');
+    if (savedActiveChatId && (state.chatHistory[savedActiveChatId] || state.chatMeta[savedActiveChatId])) {
+        const activeChatCharId = state.chatMeta[savedActiveChatId]?.characterId || savedActiveChatId;
+        const activeChatChar = getCharacterById(activeChatCharId);
+        if (activeChatChar) {
+            loadCharacter(activeChatCharId, savedActiveChatId);
+            return;
+        }
+    }
+
     const lastChar = localStorage.getItem('cv_last_char');
-    if (lastChar && (state.characters[lastChar] || FEATURED.find(f => f.id === lastChar))) loadCharacter(lastChar);
+    if (lastChar && (state.characters[lastChar] || FEATURED.find(f => f.id === lastChar))) {
+        loadCharacter(lastChar, getInitialChatIdForCharacter(lastChar));
+    }
 }
 
 // ===== API MODAL =====
@@ -327,7 +415,14 @@ function toggleSidebar() {
 function renderCharactersList() {
     const list = document.getElementById('my-characters-list');
     const noMsg = document.getElementById('no-characters-msg');
-    const chars = Object.values(state.characters);
+    const chars = Object.values(state.characters)
+        .slice()
+        .sort((a, b) => {
+            const aBranch = !!a?.isBranchChat;
+            const bBranch = !!b?.isBranchChat;
+            if (aBranch !== bBranch) return aBranch ? -1 : 1;
+            return (b?.createdAt || 0) - (a?.createdAt || 0);
+        });
     list.innerHTML = '';
     if (chars.length === 0) { noMsg.classList.remove('hidden'); }
     else { noMsg.classList.add('hidden'); chars.forEach(c => list.appendChild(createCharCard(c, false))); }
@@ -347,13 +442,21 @@ function createCharCard(char, featured) {
     const avatarHtml = char.avatar
         ? `<img src="${char.avatar}" alt="${char.name}"/>`
         : `<span>${char.emoji || getInitials(char.name)}</span>`;
+    const meta = state.chatMeta?.[char.id] || null;
+    const branchLabel = char.isBranchChat
+        ? `<span class="branch-badge" title="${escHtml(meta?.branchPointPreview || 'Branch chat')}">Branch${meta?.branchDepth > 1 ? ` ${meta.branchDepth}` : ''}</span>`
+        : '';
+    const badgeHtml = featured
+        ? `<span class="featured-badge">⭐</span>`
+        : branchLabel;
     div.innerHTML = `
     <div class="char-avatar">${avatarHtml}</div>
     <div class="char-card-info">
       <div class="char-card-name">${escHtml(char.name)}</div>
       <div class="char-card-desc">${escHtml(char.description || char.title || '')}</div>
     </div>
-    ${featured ? `<span class="featured-badge">⭐</span>` : `
+    ${badgeHtml}
+    ${featured ? '' : `
     <button class="char-card-menu" onclick="showContextMenu(event,'${char.id}')">
       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
     </button>`}`;
@@ -373,50 +476,62 @@ function filterCharacters(query) {
 }
 
 // ===== LOAD CHARACTER =====
-function loadCharacter(id) {
-    const char = state.characters[id] || FEATURED.find(f => f.id === id);
+function loadCharacter(id, chatId = null) {
+    const char = getCharacterById(id);
     if (!char) return;
+
     state.activeCharId = id;
+    state.activeChatId = chatId || id;
     localStorage.setItem('cv_last_char', id);
+    saveData();
+
     document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active'));
     document.querySelectorAll(`.char-card[data-id="${id}"]`).forEach(c => c.classList.add('active'));
     const info = document.getElementById('topbar-char-info');
     const avatarHtml = char.avatar ? `<img src="${char.avatar}" alt="${char.name}"/>` : `<span>${char.emoji || getInitials(char.name)}</span>`;
+    const meta = state.chatMeta[state.activeChatId] || null;
+    const chatLabel = meta?.name || char.name;
+    const chatStatus = meta?.isBranchChat ? `Branch chat${meta.branchDepth ? ` • L${meta.branchDepth}` : ''}` : 'Online';
     info.innerHTML = `
     <div class="topbar-char-avatar">${avatarHtml}</div>
     <div>
-      <div class="topbar-char-name">${escHtml(char.name)}</div>
-      <div class="topbar-char-status">Online</div>
+      <div class="topbar-char-name">${escHtml(chatLabel)}</div>
+      <div class="topbar-char-status">${escHtml(chatStatus)}</div>
     </div>`;
     document.getElementById('welcome-screen').classList.add('hidden');
     document.getElementById('chat-area').classList.remove('hidden');
     document.getElementById('chat-input-area').classList.remove('hidden');
-    ['clear-chat-btn', 'char-settings-btn'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
-    renderChatHistory(id, char);
+    ['clear-chat-btn', 'char-settings-btn'].forEach(btnId => { const el = document.getElementById(btnId); if (el) el.classList.remove('hidden'); });
+    renderChatHistory(state.activeChatId, char);
     document.getElementById('chat-input').focus();
 }
 
-function renderChatHistory(id, char) {
+function renderChatHistory(chatId, char) {
     const msgs = document.getElementById('chat-messages');
     msgs.innerHTML = '';
-    const history = state.chatHistory[id] || [];
-    if (history.length === 0 && char.greeting) {
+    state.activeChatId = chatId;
+    const history = state.chatHistory[chatId] || [];
+    if (history.length === 0 && char.greeting && chatId === char.id) {
         const greetMsg = { role: 'assistant', content: char.greeting, time: Date.now() };
-        if (!state.chatHistory[id]) state.chatHistory[id] = [];
-        state.chatHistory[id].push(greetMsg);
-        saveData(); appendMessage(greetMsg, char);
+        if (!state.chatHistory[chatId]) state.chatHistory[chatId] = [];
+        state.chatHistory[chatId].push(greetMsg);
+        saveData();
+        appendMessage(greetMsg, char, state.chatHistory[chatId].length - 1, chatId);
     } else {
-        history.forEach(msg => appendMessage(msg, char));
+        history.forEach((msg, index) => appendMessage(msg, char, index, chatId));
     }
     scrollToBottom();
 }
 
-function appendMessage(msg, char) {
+function appendMessage(msg, char, messageIndex = null, chatId = getActiveChatId()) {
     const msgs = document.getElementById('chat-messages');
     const div = document.createElement('div');
     div.className = `message ${msg.role}`;
+    if (messageIndex !== null) div.dataset.msgIndex = String(messageIndex);
+    if (chatId) div.dataset.chatId = chatId;
+
     const isUser = msg.role === 'user';
-    const char_ = char || (state.characters[state.activeCharId] || FEATURED.find(f => f.id === state.activeCharId));
+    const char_ = char || getCharacterForChat(chatId);
 
     let avatarHtml;
     if (isUser) {
@@ -432,11 +547,30 @@ function appendMessage(msg, char) {
 
     const timeStr = state.settings.showTimestamps && msg.time ? `<span class="message-time">${formatTime(msg.time)}</span>` : '';
     const senderName = !isUser ? `<span class="message-sender">${escHtml(char_?.name || 'AI')}</span>` : '';
+    const menuBtn = !isUser && messageIndex !== null ? `
+        <button class="message-menu-btn" type="button" aria-label="Message actions"
+            onclick="openMessageMenu(event, '${chatId}', ${messageIndex})">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.6"></circle>
+                <circle cx="12" cy="12" r="1.6"></circle>
+                <circle cx="12" cy="19" r="1.6"></circle>
+            </svg>
+        </button>` : '';
+
+    const meta = !isUser ? `
+        <div class="message-meta">
+            <div class="message-meta-left">${senderName}</div>
+            <div class="message-meta-right">${timeStr}${menuBtn}</div>
+        </div>` : (timeStr ? `
+        <div class="message-meta message-meta-user">
+            <div class="message-meta-right">${timeStr}</div>
+        </div>` : '');
+
     const formatted = formatMessageContent(msg.content || '');
 
     div.innerHTML = `
     <div class="message-avatar">${avatarHtml}</div>
-    <div class="message-body">${senderName}<div class="message-bubble">${formatted}</div>${timeStr}</div>`;
+    <div class="message-body">${meta}<div class="message-bubble">${formatted}</div></div>`;
     msgs.appendChild(div);
     return div;
 }
@@ -466,10 +600,13 @@ async function sendMessage() {
     if (!state.apiKey || !state.apiUrl) { showToast('error', 'Configure API settings first'); showAPIModal(); return; }
     const char = state.characters[state.activeCharId] || FEATURED.find(f => f.id === state.activeCharId);
     if (!char) return;
+    const chatId = getActiveChatId() || state.activeCharId;
+    if (!chatId) return;
+    state.activeChatId = chatId;
     const userMsg = { role: 'user', content: text, time: Date.now() };
-    if (!state.chatHistory[state.activeCharId]) state.chatHistory[state.activeCharId] = [];
-    state.chatHistory[state.activeCharId].push(userMsg);
-    appendMessage(userMsg, char);
+    if (!state.chatHistory[chatId]) state.chatHistory[chatId] = [];
+    state.chatHistory[chatId].push(userMsg);
+    appendMessage(userMsg, char, state.chatHistory[chatId].length - 1, chatId);
     input.value = ''; input.style.height = 'auto';
     scrollToBottom(); updateTokenCounter('');
     state.isGenerating = true; updateSendBtn(true); showTypingIndicator(char);
@@ -478,10 +615,12 @@ async function sendMessage() {
         hideTypingIndicator();
         if (response) {
             const aiMsg = { role: 'assistant', content: response, time: Date.now() };
-            state.chatHistory[state.activeCharId].push(aiMsg);
+            const chatId = getActiveChatId() || state.activeCharId;
+            if (!state.chatHistory[chatId]) state.chatHistory[chatId] = [];
+            state.chatHistory[chatId].push(aiMsg);
             saveData();
-            if (state.settings.streaming) { await streamMessage(response, char); }
-            else { appendMessage(aiMsg, char); scrollToBottom(); }
+            if (state.settings.streaming) { await streamMessage(response, char, chatId, state.chatHistory[chatId].length - 1); }
+            else { appendMessage(aiMsg, char, state.chatHistory[chatId].length - 1, chatId); scrollToBottom(); }
         }
     } catch (e) {
         hideTypingIndicator(); showToast('error', `Error: ${e.message}`); console.error('API Error:', e);
@@ -490,18 +629,31 @@ async function sendMessage() {
     }
 }
 
-async function streamMessage(fullText, char) {
+async function streamMessage(fullText, char, chatId = getActiveChatId(), messageIndex = null) {
     const msgs = document.getElementById('chat-messages');
     const div = document.createElement('div');
     div.className = 'message assistant';
+    if (messageIndex !== null) div.dataset.msgIndex = String(messageIndex);
+    if (chatId) div.dataset.chatId = chatId;
     const avatarHtml = char.avatar ? `<img src="${char.avatar}"/>` : `<span>${char.emoji || '🤖'}</span>`;
     const timeStr = state.settings.showTimestamps ? `<span class="message-time">${formatTime(Date.now())}</span>` : '';
+    const menuBtn = messageIndex !== null ? `
+        <button class="message-menu-btn" type="button" aria-label="Message actions"
+            onclick="openMessageMenu(event, '${chatId}', ${messageIndex})">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.6"></circle>
+                <circle cx="12" cy="12" r="1.6"></circle>
+                <circle cx="12" cy="19" r="1.6"></circle>
+            </svg>
+        </button>` : '';
     div.innerHTML = `
     <div class="message-avatar">${avatarHtml}</div>
     <div class="message-body">
-      <span class="message-sender">${escHtml(char.name)}</span>
+      <div class="message-meta">
+        <div class="message-meta-left"><span class="message-sender">${escHtml(char.name)}</span></div>
+        <div class="message-meta-right">${timeStr}${menuBtn}</div>
+      </div>
       <div class="message-bubble streaming-cursor" id="streaming-bubble"></div>
-      ${timeStr}
     </div>`;
     msgs.appendChild(div);
     const bubble = div.querySelector('#streaming-bubble');
@@ -541,7 +693,7 @@ async function callAPI(char) {
 
 function buildMessages(char) {
     const systemPrompt = buildSystemPrompt(char);
-    const history = state.chatHistory[state.activeCharId] || [];
+    const history = getActiveChatHistory();
     const limit = state.settings.historyLimit || 20;
     const recent = limit > 0 ? history.slice(-limit) : history;
     const msgs = [{ role: 'system', content: systemPrompt }];
@@ -613,12 +765,13 @@ function updateTokenCounter(text) {
     if (el) el.textContent = `~${approx} tokens`;
 }
 function clearChat() {
-    if (!state.activeCharId) return;
+    const chatId = getActiveChatId();
+    if (!chatId) return;
     if (!confirm('Clear this conversation?')) return;
-    state.chatHistory[state.activeCharId] = [];
+    state.chatHistory[chatId] = [];
     saveData();
-    const char = state.characters[state.activeCharId] || FEATURED.find(f => f.id === state.activeCharId);
-    renderChatHistory(state.activeCharId, char);
+    const char = getCharacterById(state.activeCharId);
+    renderChatHistory(chatId, char);
     showToast('info', 'Chat cleared');
 }
 
@@ -834,7 +987,12 @@ function contextAction(action) {
         if (!char) { showToast('error', 'Cannot delete featured characters'); return; }
         if (!confirm(`Delete "${char.name}"?`)) return;
         delete state.characters[id];
-        if (state.chatHistory[id]) delete state.chatHistory[id];
+        Object.keys(state.chatHistory).forEach(chatId => {
+            if (chatId === id || state.chatMeta[chatId]?.characterId === id) delete state.chatHistory[chatId];
+        });
+        Object.keys(state.chatMeta).forEach(chatId => {
+            if (chatId === id || state.chatMeta[chatId]?.characterId === id) delete state.chatMeta[chatId];
+        });
         if (state.activeCharId === id) {
             state.activeCharId = null;
             document.getElementById('chat-area').classList.add('hidden');
@@ -845,9 +1003,173 @@ function contextAction(action) {
         saveData(); renderCharactersList(); showToast('success', 'Character deleted');
     }
 }
-document.addEventListener('click', () => document.getElementById('context-menu').classList.add('hidden'));
+document.addEventListener('click', () => {
+    const charMenu = document.getElementById('context-menu');
+    if (charMenu) charMenu.classList.add('hidden');
+    closeMessageMenu();
+});
+
+// ===== MESSAGE ACTIONS =====
+function openMessageMenu(event, chatId, messageIndex) {
+    event.stopPropagation();
+    const menu = document.getElementById('message-actions-menu');
+    if (!menu) return;
+
+    state.messageMenuTarget = { chatId, messageIndex };
+    menu.classList.remove('hidden');
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 220;
+    const menuHeight = 168;
+    const x = Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12));
+    const y = Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - menuHeight - 12));
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+}
+
+function closeMessageMenu() {
+    const menu = document.getElementById('message-actions-menu');
+    if (menu) menu.classList.add('hidden');
+    state.messageMenuTarget = null;
+}
+
+async function messageAction(action) {
+    const target = state.messageMenuTarget;
+    closeMessageMenu();
+    if (!target) return;
+
+    if (action === 'copy') {
+        const text = state.chatHistory[target.chatId]?.[target.messageIndex]?.content || '';
+        if (!text) return;
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        showToast('success', 'Message copied');
+        return;
+    }
+
+    if (action === 'delete') {
+        openDeleteMessageModal(target.chatId, target.messageIndex);
+        return;
+    }
+
+    if (action === 'branch') {
+        createBranchFromMessage(target.chatId, target.messageIndex);
+        return;
+    }
+}
+
+function openDeleteMessageModal(chatId, messageIndex) {
+    state.deleteMessageTarget = { chatId, messageIndex };
+    const modal = document.getElementById('message-delete-modal');
+    const history = state.chatHistory[chatId] || [];
+    const msg = history[messageIndex];
+    const preview = document.getElementById('delete-message-preview');
+    if (preview) preview.textContent = (msg?.content || '').slice(0, 120) || 'Selected message';
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeDeleteMessageModal() {
+    const modal = document.getElementById('message-delete-modal');
+    if (modal) modal.classList.add('hidden');
+    state.deleteMessageTarget = null;
+}
+
+function getPairStartIndex(history, messageIndex) {
+    if (messageIndex > 0 && history[messageIndex - 1]?.role === 'user') return messageIndex - 1;
+    return messageIndex;
+}
+
+function deleteSelectedMessage(mode) {
+    const target = state.deleteMessageTarget;
+    closeDeleteMessageModal();
+    if (!target) return;
+
+    const history = state.chatHistory[target.chatId] || [];
+    if (!history.length || !history[target.messageIndex]) return;
+
+    const start = getPairStartIndex(history, target.messageIndex);
+
+    if (mode === 'single') {
+        history.splice(start, 2);
+    } else if (mode === 'fromHere') {
+        history.splice(start);
+    } else {
+        return;
+    }
+
+    state.chatHistory[target.chatId] = history;
+    const char = getCharacterForChat(target.chatId);
+    renderChatHistory(target.chatId, char);
+    saveData();
+    showToast('success', mode === 'single' ? 'Message pair deleted' : 'Conversation trimmed');
+}
+
+function createBranchFromMessage(chatId, messageIndex) {
+    const history = state.chatHistory[chatId] || [];
+    const sourceChar = getCharacterForChat(chatId);
+    const baseChar = getBaseCharacterForChat(chatId) || sourceChar;
+    const parentMeta = getChatMeta(chatId) || {};
+    if (!sourceChar || !history.length || !history[messageIndex]) return;
+
+    const branchId = `branch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const branchMessages = cloneMessages(history.slice(0, messageIndex + 1));
+
+    const branchName = makeUniqueBranchName(sourceChar.name || baseChar?.name || 'Branch');
+    const selectedMsg = history[messageIndex];
+    const branchSnippet = makeMessageSnippet(selectedMsg?.content || '', 80);
+    const branchDepth = (parentMeta.branchDepth || 0) + 1;
+
+    const branchCharacter = cloneMessages(sourceChar) || { ...sourceChar };
+    branchCharacter.id = branchId;
+    branchCharacter.name = branchName;
+    branchCharacter.title = `${sourceChar.title || sourceChar.name} Branch`;
+    branchCharacter.description = branchSnippet
+        ? `Branch chat from ${sourceChar.name} • “${branchSnippet}”`
+        : `Branch chat from ${sourceChar.name}`;
+    branchCharacter.isBranchChat = true;
+    branchCharacter.sourceCharacterId = baseChar?.id || sourceChar.id;
+    branchCharacter.sourceChatId = chatId;
+    branchCharacter.branchPointIndex = messageIndex;
+    branchCharacter.branchPointRole = selectedMsg?.role || '';
+    branchCharacter.branchPointPreview = branchSnippet;
+    branchCharacter.branchDepth = branchDepth;
+    branchCharacter.createdAt = Date.now();
+
+    state.characters[branchId] = branchCharacter;
+    state.chatHistory[branchId] = branchMessages;
+    state.chatMeta[branchId] = {
+        characterId: branchId,
+        name: branchName,
+        parentChatId: chatId,
+        parentCharacterId: sourceChar.id,
+        sourceCharacterId: baseChar?.id || sourceChar.id,
+        branchPointIndex: messageIndex,
+        branchPointRole: selectedMsg?.role || '',
+        branchPointPreview: branchSnippet,
+        branchDepth,
+        isBranchChat: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+
+    saveData();
+    renderCharactersList();
+    loadCharacter(branchId, branchId);
+    showToast('success', 'Branch chat created');
+}
 
 // ===== EXPORT / IMPORT CHARACTER (Base64) =====
+
 
 function openExportModal(char) {
     const encoded = CharacterCodec.encode(char);
@@ -1078,6 +1400,115 @@ function processImportFile(e) {
     e.target.value = ''; // Reset
 }
 
+
+// ===== BACKUP / RESTORE =====
+function getProjectStorageSnapshot() {
+    const snapshot = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('cv_')) {
+            snapshot[key] = localStorage.getItem(key) ?? '';
+        }
+    }
+    return snapshot;
+}
+
+function clearProjectStorage() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('cv_')) keys.push(key);
+    }
+    keys.forEach(key => localStorage.removeItem(key));
+}
+
+function downloadTextFile(filename, text, mimeType = 'application/json;charset=utf-8') {
+    const blob = new Blob([text], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function base64EncodeUnicode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
+function base64DecodeUnicode(str) {
+    return decodeURIComponent(escape(atob(str)));
+}
+
+function exportFullBackup() {
+    try {
+        const snapshot = getProjectStorageSnapshot();
+        const encoded = base64EncodeUnicode(JSON.stringify(snapshot));
+        const payload = { _cv_backup: encoded };
+        downloadTextFile('CharacterVerse_Backup.json', JSON.stringify(payload, null, 2));
+        showToast('success', 'Backup exported!');
+    } catch (err) {
+        console.error('Backup export failed:', err);
+        showToast('error', 'Backup export failed');
+    }
+}
+
+function triggerBackupImport() {
+    document.getElementById('backup-file-input')?.click();
+}
+
+function handleBackupImport(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        processBackupImportText(reader.result || '');
+        event.target.value = '';
+    };
+    reader.onerror = () => {
+        showToast('error', 'Could not read backup file');
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
+
+function processBackupImportText(rawText) {
+    try {
+        const parsed = JSON.parse(rawText);
+        const encoded = parsed?._cv_backup;
+
+        if (typeof encoded !== 'string' || !encoded.trim()) {
+            showToast('error', 'Invalid backup file');
+            return;
+        }
+
+        const jsonText = base64DecodeUnicode(encoded.trim());
+        const data = JSON.parse(jsonText);
+
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            showToast('error', 'Backup data is invalid');
+            return;
+        }
+
+        clearProjectStorage();
+
+        Object.entries(data).forEach(([key, value]) => {
+            if (key && key.startsWith('cv_')) {
+                localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+            }
+        });
+
+        showToast('success', 'Backup restored. Reloading...');
+        setTimeout(() => location.reload(), 700);
+    } catch (err) {
+        console.error('Backup import failed:', err);
+        showToast('error', 'Backup import failed');
+    }
+}
+
 // ===== SETTINGS =====
 function openGlobalSettings() {
     document.getElementById('settings-modal').classList.remove('hidden');
@@ -1239,7 +1670,7 @@ function updateMemoryPanel() {
     if (!char) return;
     const sys = buildSystemPrompt(char);
     document.getElementById('memory-system').textContent = sys.slice(0, 400) + (sys.length > 400 ? '...' : '');
-    const hist = state.chatHistory[state.activeCharId] || [];
+    const hist = getActiveChatHistory();
     const limit = state.settings.historyLimit || 20;
     document.getElementById('memory-msg-count').textContent = `${Math.min(hist.length, limit)} / ${hist.length} total`;
     const estTokens = Math.round(sys.length / 4 + hist.slice(-limit).reduce((a, m) => a + m.content.length / 4, 0));
