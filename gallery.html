@@ -51,6 +51,29 @@
         <p class="gallery-p">Cards load in random order, without repeats. Scroll to load more.</p>
       </div>
 
+      <!-- Filters (search + categories) -->
+      <section class="gallery-filters" aria-label="Gallery filters">
+        <div class="gsearch">
+          <svg class="gsearch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input id="gallery-search" type="text" placeholder="Search characters…" autocomplete="off" spellcheck="false" />
+          <button class="gclear" id="gallery-clear" title="Clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="gchips" id="gallery-chips" aria-label="Categories"></div>
+
+        <div class="gmeta">
+          <span class="gmeta-pill" id="gmeta-match">0 matched</span>
+          <span class="gmeta-pill" id="gmeta-loaded">0 loaded</span>
+        </div>
+      </section>
+
       <section class="gallery-grid" id="gallery-grid"></section>
 
       <div class="gallery-sentinel" id="gallery-sentinel">
@@ -64,6 +87,53 @@
         <div class="gallery-empty-sub">Check your gallery.json data.</div>
       </div>
     </main>
+
+    <!-- Details modal -->
+    <div class="gmodal-backdrop hidden" id="gmodal">
+      <div class="gmodal" role="dialog" aria-modal="true" aria-labelledby="gmodal-title">
+        <button class="gmodal-close" id="gmodal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="gmodal-header">
+          <div class="gmodal-avatar" id="gmodal-avatar"></div>
+          <div class="gmodal-headtext">
+            <div class="gmodal-name" id="gmodal-title">—</div>
+            <div class="gmodal-sub" id="gmodal-sub">—</div>
+          </div>
+        </div>
+
+        <div class="gmodal-body">
+          <div class="gmodal-section">
+            <div class="gmodal-label">Short Description</div>
+            <div class="gmodal-text" id="gmodal-desc">—</div>
+          </div>
+          <div class="gmodal-section">
+            <div class="gmodal-label">Opening Message</div>
+            <div class="gmodal-open" id="gmodal-open">—</div>
+          </div>
+          <div class="gmodal-tags" id="gmodal-tags"></div>
+        </div>
+
+        <div class="gmodal-actions">
+          <button class="gbtn" id="gmodal-copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy code
+          </button>
+          <button class="gbtn primary" id="gmodal-add">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            Add to chat
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="toast-container" id="toast-container"></div>
   </div>

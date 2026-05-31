@@ -1,12 +1,19 @@
 // CharacterVerse Gallery (lazy-loaded + randomized)
 
 const state = {
-  codes: [],
+  // Full list after decode: [{ code, char, tagSet, searchText }]
+  items: [],
+  shuffled: [],
+  filtered: [],
   cursor: 0,
   batchDesktop: 6,
   batchMobile: 4,
   isLoading: false,
-  totalLoaded: 0
+  totalLoaded: 0,
+  activeTag: 'all',
+  query: '',
+  modalItem: null,
+  observer: null
 };
 
 const CharacterCodec = {
@@ -27,6 +34,7 @@ const CharacterCodec = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyGallerySettingsFromLocalStorage();
   loadGallery().catch(err => {
     console.error(err);
     showEmpty('Failed to load gallery.json');
@@ -41,22 +49,43 @@ async function loadGallery() {
   const arr = Array.isArray(data) ? data : (Array.isArray(data?.characters) ? data.characters : []);
   if (!arr.length) { showEmpty('No character codes in gallery.json'); return; }
 
-  // Randomize without repeats (Fisher-Yates)
-  state.codes = fisherYatesShuffle(arr.slice());
-  state.cursor = 0;
+  // Decode once (for search + categories + modal)
+  const decodedItems = [];
+  for (const code of arr) {
+    const decoded = CharacterCodec.decode(code);
+    if (!decoded.success) continue;
+    const char = decoded.character;
+    const tagSet = new Set((Array.isArray(char.tags) ? char.tags : []).map(t => String(t).trim()).filter(Boolean));
+    const searchText = [char.name, char.title, char.description, char.world, ...(Array.isArray(char.tags) ? char.tags : [])]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    decodedItems.push({ code, char, tagSet, searchText });
+  }
 
-  // Initial load
-  renderNextBatch();
+  if (!decodedItems.length) { showEmpty('No valid character codes found'); return; }
+
+  // Randomize without repeats (Fisher-Yates) — keep this as your core algorithm
+  state.items = decodedItems;
+  state.shuffled = fisherYatesShuffle(decodedItems.slice());
+
+  initFiltersUI();
+  applyFiltersAndReset();
 
   // Lazy-load sentinel
   const sentinel = document.getElementById('gallery-sentinel');
-  const obs = new IntersectionObserver((entries) => {
+  state.observer = new IntersectionObserver((entries) => {
     const e = entries[0];
     if (e.isIntersecting) renderNextBatch();
-  }, { root: null, threshold: 0.1, rootMargin: '200px' });
-  obs.observe(sentinel);
+  }, { root: null, threshold: 0.1, rootMargin: '240px' });
+  state.observer.observe(sentinel);
 
-  window.addEventListener('resize', () => updateSentinelText());
+  window.addEventListener('resize', () => {
+    updateSentinelText();
+    // batch size changes on resize; no reset needed
+  });
+
+  initModalUI();
   updateSentinelText();
 }
 
@@ -75,29 +104,30 @@ function getBatchSize() {
 function updateSentinelText() {
   const txt = document.getElementById('sentinel-text');
   if (!txt) return;
-  if (state.cursor >= state.codes.length) txt.textContent = 'That’s everything ✨';
+  if (state.cursor >= state.filtered.length) txt.textContent = 'That’s everything ✨';
   else txt.textContent = 'Scroll to load more…';
 }
 
 function renderNextBatch() {
   if (state.isLoading) return;
-  if (state.cursor >= state.codes.length) { updateSentinelText(); return; }
+  if (state.cursor >= state.filtered.length) { updateSentinelText(); return; }
   state.isLoading = true;
 
   const batch = getBatchSize();
-  const slice = state.codes.slice(state.cursor, state.cursor + batch);
+  const slice = state.filtered.slice(state.cursor, state.cursor + batch);
   state.cursor += slice.length;
 
   const grid = document.getElementById('gallery-grid');
-  slice.forEach((code) => {
-    const decoded = CharacterCodec.decode(code);
-    if (!decoded.success) return; // skip invalid entries silently
-    const card = createCard(decoded.character, code);
+  slice.forEach((item) => {
+    const card = createCard(item);
     grid.appendChild(card);
     state.totalLoaded++;
   });
 
+  // Counts
   document.getElementById('gt-count').textContent = `${state.totalLoaded} loaded`;
+  const loadedPill = document.getElementById('gmeta-loaded');
+  if (loadedPill) loadedPill.textContent = `${state.totalLoaded} loaded`;
   updateSentinelText();
 
   // Empty state if nothing rendered
@@ -106,9 +136,10 @@ function renderNextBatch() {
   state.isLoading = false;
 }
 
-function createCard(char, code) {
+function createCard(item) {
+  const { char, code } = item;
   const el = document.createElement('article');
-  el.className = 'gcard';
+  el.className = 'gcard gcard-click';
 
   const avatarHtml = char.avatar
     ? `<img src="${escAttr(char.avatar)}" alt="${escAttr(char.name)}" />`
@@ -118,6 +149,8 @@ function createCard(char, code) {
     ? `<div class="gcard-tags">${char.tags.slice(0, 6).map(t => `<span class="gtag">${escHtml(t)}</span>`).join('')}</div>`
     : '';
 
+  const richerDesc = buildRicherShortDescription(char);
+
   el.innerHTML = `
     <div class="gcard-top">
       <div class="gcard-avatar">${avatarHtml}</div>
@@ -126,7 +159,7 @@ function createCard(char, code) {
         <div class="gcard-title">${escHtml(char.title || '')}</div>
       </div>
     </div>
-    <div class="gcard-desc">${escHtml(char.description || char.world || '')}</div>
+    <div class="gcard-desc">${escHtml(richerDesc)}</div>
     ${tagsHtml}
     <div class="gcard-actions">
       <button class="gbtn" data-action="copy">
@@ -145,7 +178,9 @@ function createCard(char, code) {
     </div>
   `;
 
-  el.querySelector('[data-action="copy"]').addEventListener('click', async () => {
+  el.querySelector('[data-action="copy"]').addEventListener('click', async (e) => {
+    // prevent opening modal
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(code);
       showToast('success', 'Code copied to clipboard');
@@ -154,7 +189,8 @@ function createCard(char, code) {
     }
   });
 
-  el.querySelector('[data-action="add"]').addEventListener('click', () => {
+  el.querySelector('[data-action="add"]').addEventListener('click', (e) => {
+    e.stopPropagation();
     const res = addCharacterToLocalStorage(char);
     if (!res.success) {
       showToast('error', res.error || 'Failed to add character');
@@ -166,7 +202,33 @@ function createCard(char, code) {
     setTimeout(() => { location.href = 'index.html'; }, 350);
   });
 
+  // Click anywhere else → open modal with details
+  el.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    openModal(item);
+  });
+
   return el;
+}
+
+function buildRicherShortDescription(char) {
+  const desc = (char.description || '').trim();
+  const world = (char.world || '').trim();
+  const title = (char.title || '').trim();
+  // Aim for “a bit more”, but not a wall of text.
+  let out = desc || '';
+  if (out.length < 70 && world) out = out ? `${out} — ${world}` : world;
+  if (!out && title) out = title;
+  if (!out) out = 'A CharacterVerse persona ready to chat.';
+  return smartTrim(out, 180);
+}
+
+function smartTrim(text, maxLen) {
+  const s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (s.length <= maxLen) return s;
+  const cut = s.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trim() + '…';
 }
 
 function addCharacterToLocalStorage(char) {
@@ -202,6 +264,209 @@ function showEmpty(msg) {
   if (sub && msg) sub.textContent = msg;
   document.getElementById('gallery-empty')?.classList.remove('hidden');
   document.getElementById('gallery-sentinel')?.classList.add('hidden');
+}
+
+// ===== FILTERS =====
+function initFiltersUI() {
+  const search = document.getElementById('gallery-search');
+  const clear = document.getElementById('gallery-clear');
+  const chips = document.getElementById('gallery-chips');
+
+  // Build categories from tags
+  const tagCounts = new Map();
+  state.items.forEach(it => {
+    it.tagSet.forEach(t => tagCounts.set(t, (tagCounts.get(t) || 0) + 1));
+  });
+
+  const tagsSorted = Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([t]) => t)
+    .slice(0, 14); // keep chips tidy
+
+  chips.innerHTML = '';
+  chips.appendChild(makeChip('All', 'all'));
+  tagsSorted.forEach(t => chips.appendChild(makeChip(t, t)));
+  if (tagCounts.size > tagsSorted.length) chips.appendChild(makeChip('More…', '__more__'));
+
+  setActiveChip('all');
+
+  // Search
+  const onSearch = debounce(() => {
+    state.query = (search.value || '').trim().toLowerCase();
+    applyFiltersAndReset();
+  }, 120);
+  search.addEventListener('input', onSearch);
+  clear.addEventListener('click', () => {
+    search.value = '';
+    state.query = '';
+    applyFiltersAndReset();
+    search.focus();
+  });
+}
+
+function makeChip(label, value) {
+  const b = document.createElement('button');
+  b.className = 'gchip';
+  b.type = 'button';
+  b.textContent = label;
+  b.dataset.value = value;
+  b.addEventListener('click', () => {
+    if (value === '__more__') {
+      showToast('info', 'Tip: use search to find any tag/category');
+      return;
+    }
+    state.activeTag = value;
+    setActiveChip(value);
+    applyFiltersAndReset();
+  });
+  return b;
+}
+
+function setActiveChip(value) {
+  document.querySelectorAll('.gchip').forEach(c => {
+    c.classList.toggle('active', c.dataset.value === value);
+  });
+}
+
+function applyFiltersAndReset() {
+  // Keep randomized order (state.shuffled) but filter it
+  const tag = state.activeTag;
+  const q = state.query;
+
+  state.filtered = state.shuffled.filter(it => {
+    const tagOk = (tag === 'all') ? true : it.tagSet.has(tag);
+    const qOk = !q ? true : it.searchText.includes(q);
+    return tagOk && qOk;
+  });
+
+  // Reset rendering
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = '';
+  state.cursor = 0;
+  state.totalLoaded = 0;
+
+  // Toggle empty/sentinel
+  document.getElementById('gallery-empty')?.classList.add('hidden');
+  document.getElementById('gallery-sentinel')?.classList.remove('hidden');
+
+  const matchPill = document.getElementById('gmeta-match');
+  if (matchPill) matchPill.textContent = `${state.filtered.length} matched`;
+  const loadedPill = document.getElementById('gmeta-loaded');
+  if (loadedPill) loadedPill.textContent = `0 loaded`;
+  document.getElementById('gt-count').textContent = `0 loaded`;
+
+  if (!state.filtered.length) {
+    showEmpty('No characters match your filters. Try another tag or clear search.');
+    return;
+  }
+
+  renderNextBatch();
+  updateSentinelText();
+}
+
+function debounce(fn, wait) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
+// ===== MODAL =====
+function initModalUI() {
+  const backdrop = document.getElementById('gmodal');
+  const closeBtn = document.getElementById('gmodal-close');
+
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+}
+
+function openModal(item) {
+  state.modalItem = item;
+  const { char, code } = item;
+
+  const backdrop = document.getElementById('gmodal');
+  const av = document.getElementById('gmodal-avatar');
+  const title = document.getElementById('gmodal-title');
+  const sub = document.getElementById('gmodal-sub');
+  const desc = document.getElementById('gmodal-desc');
+  const open = document.getElementById('gmodal-open');
+  const tags = document.getElementById('gmodal-tags');
+  const copyBtn = document.getElementById('gmodal-copy');
+  const addBtn = document.getElementById('gmodal-add');
+
+  const avatarHtml = char.avatar
+    ? `<img src="${escAttr(char.avatar)}" alt="${escAttr(char.name)}" />`
+    : `<span>${escHtml(char.emoji || getInitials(char.name))}</span>`;
+  av.innerHTML = avatarHtml;
+
+  title.textContent = char.name || 'Unnamed';
+  sub.textContent = [char.title, char.world].filter(Boolean).join(' • ') || '—';
+  desc.textContent = (char.description || buildRicherShortDescription(char)).trim();
+  open.textContent = (char.greeting || '').trim() || '—';
+
+  const tlist = (Array.isArray(char.tags) ? char.tags : []).map(t => String(t).trim()).filter(Boolean);
+  tags.innerHTML = tlist.length
+    ? tlist.map(t => `<span class="gtag">${escHtml(t)}</span>`).join('')
+    : `<span class="gtag">no tags</span>`;
+
+  // Wire buttons
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      showToast('success', 'Code copied to clipboard');
+    } catch {
+      showToast('error', 'Clipboard blocked — copy manually');
+    }
+  };
+
+  addBtn.onclick = () => {
+    const res = addCharacterToLocalStorage(char);
+    if (!res.success) {
+      showToast('error', res.error || 'Failed to add character');
+      return;
+    }
+    localStorage.setItem('cv_last_char', res.id);
+    showToast('success', 'Added! Redirecting…');
+    setTimeout(() => { location.href = 'index.html'; }, 350);
+  };
+
+  backdrop.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const backdrop = document.getElementById('gmodal');
+  if (!backdrop || backdrop.classList.contains('hidden')) return;
+  backdrop.classList.add('hidden');
+  state.modalItem = null;
+  document.body.style.overflow = 'auto';
+}
+
+// ===== SETTINGS (match main app look) =====
+function applyGallerySettingsFromLocalStorage() {
+  try {
+    const root = document.getElementById('html-root') || document.documentElement;
+    const raw = localStorage.getItem('cv_settings');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s?.theme) root.setAttribute('data-theme', s.theme);
+    if (typeof s?.fontSize === 'number') {
+      document.documentElement.style.setProperty('--font-size-base', String(s.fontSize) + 'px');
+    }
+    // Direction/language hints (optional)
+    if (s?.direction && s.direction !== 'auto') {
+      root.setAttribute('dir', s.direction);
+    }
+  } catch (e) {
+    console.warn('Settings load failed', e);
+  }
 }
 
 function getInitials(name) {
