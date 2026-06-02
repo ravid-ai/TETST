@@ -842,6 +842,29 @@
                             <button class="dir-btn" id="dir-btn-rtl" onclick="setDirection('rtl',this)">→ RTL</button>
                         </div>
                     </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Translation Language</div>
+                            <div class="setting-desc">Used by the Translate action on messages</div>
+                        </div>
+                        <select class="form-select" id="translate-lang">
+                            <option value="en">🇺🇸 English</option>
+                            <option value="fa">🇮🇷 Persian فارسی</option>
+                            <option value="es">🇪🇸 Spanish</option>
+                            <option value="fr">🇫🇷 French</option>
+                            <option value="de">🇩🇪 German</option>
+                            <option value="ja">🇯🇵 Japanese</option>
+                            <option value="zh">🇨🇳 Chinese</option>
+                            <option value="ar">🇸🇦 Arabic</option>
+                            <option value="ru">🇷🇺 Russian</option>
+                            <option value="tr">🇹🇷 Turkish</option>
+                            <option value="pt">🇵🇹 Portuguese</option>
+                            <option value="hi">🇮🇳 Hindi</option>
+                            <option value="ko">🇰🇷 Korean</option>
+                            <option value="it">🇮🇹 Italian</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="settings-appearance" class="settings-panel">
@@ -1015,6 +1038,17 @@
                 <path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
             </svg>
             Copy
+        </button>
+        <button onclick="messageAction('translate')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 5h8"></path>
+                <path d="M8 3v2"></path>
+                <path d="M6 5c0 5 3 8 6 10"></path>
+                <path d="M4 19l5-9 5 9"></path>
+                <path d="M14 7h6"></path>
+                <path d="M17 7c0 5-2 8-4 10"></path>
+            </svg>
+            Translate
         </button>
         <button onclick="messageAction('delete')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

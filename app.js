@@ -5,12 +5,12 @@ const state = {
     characters: {}, chatHistory: {},
     profile: { name: '', gender: 'other', bio: '', avatar: '' },
     settings: {
-        language: '', direction: 'auto', streaming: true,
+        language: '', translateLang: 'en', direction: 'auto', streaming: true,
         historyLimit: 20, showTimestamps: true, roleplayEnhancer: true,
         theme: 'dark', fontSize: 15, animations: true, streamSpeed: 18
     },
     tags: [], contextMenuTarget: null, messageMenuTarget: null, deleteMessageTarget: null,
-    activeChatId: null, chatMeta: {}, isGenerating: false
+    activeChatId: null, chatMeta: {}, isGenerating: false, translatingMessages: {}
 };
 
 // ===== CHARACTER CODEC (Base64 Import/Export) =====
@@ -254,6 +254,87 @@ function makeMessageSnippet(text, maxLen = 72) {
     return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
 }
 
+const TRANSLATE_LANGUAGE_LABELS = {
+    en: 'English',
+    fa: 'Persian',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German',
+    ja: 'Japanese',
+    zh: 'Chinese',
+    ar: 'Arabic',
+    ru: 'Russian',
+    tr: 'Turkish',
+    pt: 'Portuguese',
+    hi: 'Hindi',
+    ko: 'Korean',
+    it: 'Italian'
+};
+
+function getTranslateLanguageLabel(code = '') {
+    const normalized = String(code || '').trim().toLowerCase();
+    return TRANSLATE_LANGUAGE_LABELS[normalized] || normalized || 'English';
+}
+
+function escapeHtmlText(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function getMessageElement(chatId, messageIndex) {
+    const targetChatId = String(chatId);
+    const targetIndex = String(messageIndex);
+    return [...document.querySelectorAll('.message')].find(el =>
+        el.dataset.chatId === targetChatId && el.dataset.msgIndex === targetIndex
+    ) || null;
+}
+
+function setMessageTranslationLoading(chatId, messageIndex, loading, fallbackTranslation = '') {
+    const msgEl = getMessageElement(chatId, messageIndex);
+    if (!msgEl) return;
+
+    const body = msgEl.querySelector('.message-body');
+    if (!body) return;
+
+    let box = msgEl.querySelector('.message-translation');
+    if (!box) {
+        box = document.createElement('div');
+        box.className = 'message-translation';
+        body.appendChild(box);
+    }
+
+    if (loading) {
+        box.className = 'message-translation loading';
+        box.innerHTML = `
+            <span class="translation-loading-dot"></span>
+            <span class="translation-loading-text">Translating…</span>
+        `;
+        return;
+    }
+
+    if (fallbackTranslation) {
+        box.className = 'message-translation';
+        box.innerHTML = `
+            <div class="message-translation-label">Translation</div>
+            <div class="message-translation-text">${escapeHtmlText(fallbackTranslation).replace(/\n/g, '<br>')}</div>
+        `;
+    } else {
+        box.remove();
+    }
+}
+
+function renderTranslationBlock(msg) {
+    if (!msg || !msg.translation) return '';
+    return `
+        <div class="message-translation">
+            <div class="message-translation-label">Translation</div>
+            <div class="message-translation-text">${escapeHtmlText(msg.translation).replace(/\n/g, '<br>')}</div>
+        </div>`;
+}
+
 function renderApp() {
     renderCharactersList();
     renderFeaturedList();
@@ -466,6 +547,60 @@ function createCharCard(char, featured) {
 function getInitials(name) { return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
 function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+
+
+// ===== DYNAMIC WALLPAPER (Chat Background) =====
+let _wallpaperRequestSeq = 0;
+
+function normalizeWallpaperName(name = '') {
+    // lower-case + remove ALL whitespace (e.g., "Detective Kane" -> "detectivekane")
+    return String(name || '')
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .trim();
+}
+
+function clearChatWallpaper() {
+    const chatArea = document.getElementById('chat-area');
+    if (!chatArea) return;
+    chatArea.style.backgroundImage = 'none';
+    // keep the rest of the UI clean (no lingering props)
+    chatArea.style.backgroundSize = '';
+    chatArea.style.backgroundPosition = '';
+    chatArea.style.backgroundAttachment = '';
+    chatArea.style.backgroundRepeat = '';
+}
+
+function applyCharacterWallpaper(characterName) {
+    const chatArea = document.getElementById('chat-area');
+    if (!chatArea) return;
+
+    const normalized = normalizeWallpaperName(characterName);
+    if (!normalized) { clearChatWallpaper(); return; }
+
+    const isMobile = window.innerWidth <= 768;
+    const folder = isMobile ? 'Wallpaper_m' : 'Wallpaper_d';
+    const src = `${folder}/${normalized}.webp`;
+
+    // Sequence guard: prevents old async onload from overriding a newer selection
+    const reqId = ++_wallpaperRequestSeq;
+
+    const img = new Image();
+    img.onload = () => {
+        if (reqId !== _wallpaperRequestSeq) return;
+        chatArea.style.backgroundImage = `url('${src}')`;
+        chatArea.style.backgroundSize = 'cover';
+        chatArea.style.backgroundPosition = 'center';
+        chatArea.style.backgroundAttachment = 'fixed';
+        chatArea.style.backgroundRepeat = 'no-repeat';
+    };
+    img.onerror = () => {
+        if (reqId !== _wallpaperRequestSeq) return;
+        // No wallpaper found => fall back silently to default background
+        clearChatWallpaper();
+    };
+    img.src = src;
+}
 function filterCharacters(query) {
     const q = query.toLowerCase();
     document.querySelectorAll('#my-characters-list .char-card').forEach(card => {
@@ -501,6 +636,7 @@ function loadCharacter(id, chatId = null) {
     document.getElementById('welcome-screen').classList.add('hidden');
     document.getElementById('chat-area').classList.remove('hidden');
     document.getElementById('chat-input-area').classList.remove('hidden');
+    applyCharacterWallpaper(char.name);
     ['clear-chat-btn', 'char-settings-btn'].forEach(btnId => { const el = document.getElementById(btnId); if (el) el.classList.remove('hidden'); });
     renderChatHistory(state.activeChatId, char);
     document.getElementById('chat-input').focus();
@@ -567,10 +703,11 @@ function appendMessage(msg, char, messageIndex = null, chatId = getActiveChatId(
         </div>` : '');
 
     const formatted = formatMessageContent(msg.content || '');
+    const translationHtml = !isUser ? renderTranslationBlock(msg) : '';
 
     div.innerHTML = `
     <div class="message-avatar">${avatarHtml}</div>
-    <div class="message-body">${meta}<div class="message-bubble">${formatted}</div></div>`;
+    <div class="message-body">${meta}<div class="message-bubble">${formatted}</div>${translationHtml}</div>`;
     msgs.appendChild(div);
     return div;
 }
@@ -667,6 +804,68 @@ async function streamMessage(fullText, char, chatId = getActiveChatId(), message
     }
     bubble.classList.remove('streaming-cursor');
     bubble.removeAttribute('id');
+}
+
+async function translateMessage(chatId, messageIndex) {
+    if (!state.apiKey || !state.apiUrl) {
+        showToast('error', 'Configure API settings first');
+        showAPIModal();
+        return;
+    }
+
+    const history = state.chatHistory[chatId] || [];
+    const msg = history[messageIndex];
+    if (!msg || !msg.content) return;
+
+    const targetLangCode = state.settings.translateLang || 'en';
+    const targetLangLabel = getTranslateLanguageLabel(targetLangCode);
+    const translationPrompt = `You are a professional translator. Translate the following text into ${targetLangLabel}. Provide ONLY the translation, without any extra text, markdown, or explanations. Text to translate: ${msg.content}`;
+
+    const key = `${chatId}:${messageIndex}`;
+    const previousTranslation = msg.translation || '';
+    state.translatingMessages[key] = true;
+    setMessageTranslationLoading(chatId, messageIndex, true);
+
+    try {
+        const resp = await fetch(state.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: state.apiModel,
+                messages: [{ role: 'user', content: translationPrompt }],
+                temperature: 0.2,
+                max_tokens: Math.min(1024, Math.max(128, Math.ceil(String(msg.content).length * 1.5)))
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error?.message || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const translation = String(data.choices?.[0]?.message?.content || '').trim();
+        if (!translation) throw new Error('Empty translation returned');
+
+        msg.translation = translation;
+        saveData();
+        setMessageTranslationLoading(chatId, messageIndex, false, translation);
+        showToast('success', 'Message translated');
+    } catch (err) {
+        if (previousTranslation) {
+            msg.translation = previousTranslation;
+            setMessageTranslationLoading(chatId, messageIndex, false, previousTranslation);
+        } else {
+            setMessageTranslationLoading(chatId, messageIndex, false);
+        }
+        console.error('Translate error:', err);
+        showToast('error', `Translate failed: ${err.message}`);
+    } finally {
+        delete state.translatingMessages[key];
+    }
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -999,6 +1198,7 @@ function contextAction(action) {
             document.getElementById('chat-input-area').classList.add('hidden');
             document.getElementById('welcome-screen').classList.remove('hidden');
             document.getElementById('topbar-char-info').innerHTML = '';
+            clearChatWallpaper();
         }
         saveData(); renderCharactersList(); showToast('success', 'Character deleted');
     }
@@ -1019,8 +1219,8 @@ function openMessageMenu(event, chatId, messageIndex) {
     menu.classList.remove('hidden');
 
     const rect = event.currentTarget.getBoundingClientRect();
-    const menuWidth = 220;
-    const menuHeight = 168;
+    const menuWidth = 232;
+    const menuHeight = 212;
     const x = Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12));
     const y = Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - menuHeight - 12));
     menu.style.left = `${x}px`;
@@ -1059,6 +1259,11 @@ async function messageAction(action) {
 
     if (action === 'delete') {
         openDeleteMessageModal(target.chatId, target.messageIndex);
+        return;
+    }
+
+    if (action === 'translate') {
+        translateMessage(target.chatId, target.messageIndex);
         return;
     }
 
@@ -1513,6 +1718,7 @@ function processBackupImportText(rawText) {
 function openGlobalSettings() {
     document.getElementById('settings-modal').classList.remove('hidden');
     document.getElementById('pref-language').value = state.settings.language || '';
+    document.getElementById('translate-lang').value = state.settings.translateLang || 'en';
     document.getElementById('streaming-toggle').checked = state.settings.streaming !== false;
     document.getElementById('history-limit').value = state.settings.historyLimit || 20;
     document.getElementById('timestamps-toggle').checked = state.settings.showTimestamps !== false;
@@ -1546,6 +1752,7 @@ function closeSettingsModal() { document.getElementById('settings-modal').classL
 
 function saveSettings() {
     state.settings.language = document.getElementById('pref-language').value;
+    state.settings.translateLang = document.getElementById('translate-lang').value || 'en';
     state.settings.streaming = document.getElementById('streaming-toggle').checked;
     state.settings.historyLimit = parseInt(document.getElementById('history-limit').value);
     state.settings.showTimestamps = document.getElementById('timestamps-toggle').checked;
@@ -1652,6 +1859,7 @@ function deleteAllCharacters() {
     document.getElementById('chat-area').classList.add('hidden');
     document.getElementById('chat-input-area').classList.add('hidden');
     document.getElementById('topbar-char-info').innerHTML = '';
+    clearChatWallpaper();
     showToast('success', 'All characters deleted'); closeSettingsModal();
 }
 function resetEverything() {
