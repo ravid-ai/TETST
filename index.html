@@ -17,7 +17,6 @@
 
 <body>
 
-    <!-- ===== LOADING SCREEN ===== -->
     <div id="loading-screen" class="loading-screen">
         <div class="loading-logo">
             <div class="loading-icon">
@@ -46,10 +45,8 @@
         </div>
     </div>
 
-    <!-- ===== APP ROOT ===== -->
     <div id="app" class="app hidden">
 
-        <!-- API SETUP MODAL -->
         <div id="api-modal" class="modal-backdrop">
             <div class="modal-container api-modal-container">
                 <div class="modal-header">
@@ -133,7 +130,6 @@
             </div>
         </div>
 
-        <!-- USER PROFILE MODAL -->
         <div id="profile-modal" class="modal-backdrop hidden">
             <div class="modal-container profile-modal-container">
                 <div class="modal-header">
@@ -212,7 +208,6 @@
             </div>
         </div>
 
-        <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand">
@@ -270,6 +265,26 @@
                 </div>
             </div>
 
+            <div class="sidebar-gallery-wrap">
+                <button class="btn-gallery-banner" onclick="location.href='gallery.html'">
+                    <div class="gallery-banner-glow"></div>
+                    <div class="gallery-banner-icon">
+                        <div class="gallery-banner-icon">
+                            <img src="icongallery.webp" alt="Gallery Icon"
+                                style="width: 100%; height: 100%; border-radius: inherit; object-fit: cover;">
+                        </div>
+                    </div>
+                    <div class="gallery-banner-text">
+                        <div class="gallery-banner-title">Explore Gallery</div>
+                        <div class="gallery-banner-sub">Discover new characters ✨</div>
+                    </div>
+                    <svg class="gallery-banner-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+
             <div class="sidebar-search">
                 <div class="search-input-wrap">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -306,13 +321,6 @@
                     </svg>
                     API Settings
                 </button>
-                <button class="footer-btn" onclick="location.href='gallery.html'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M4 6a2 2 0 0 1 2-2h3l2 2h5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z" />
-                        <path d="M9 14l2-2 3 3 2-2 2 2" />
-                    </svg>
-                    Gallery
-                </button>
                 <button class="footer-btn" onclick="openGlobalSettings()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path
@@ -324,10 +332,8 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main-content" id="main-content">
 
-            <!-- TOPBAR -->
             <header class="topbar" id="topbar">
                 <div class="topbar-left">
                     <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
@@ -354,7 +360,6 @@
                 </div>
             </header>
 
-            <!-- WELCOME SCREEN -->
             <div id="welcome-screen" class="welcome-screen">
                 <div class="welcome-content">
                     <div class="welcome-logo-wrap">
@@ -415,7 +420,6 @@
                 <div class="orb orb-3"></div>
             </div>
 
-            <!-- CHAT AREA -->
             <div id="chat-area" class="chat-area hidden">
                 <div id="chat-messages" class="chat-messages"></div>
                 <div id="typing-indicator" class="typing-indicator hidden">
@@ -426,7 +430,6 @@
                 </div>
             </div>
 
-            <!-- CHAT INPUT -->
             <div id="chat-input-area" class="chat-input-area hidden">
                 <div class="input-container">
                     <div class="input-extras">
@@ -456,7 +459,6 @@
         </main>
     </div>
 
-    <!-- CHARACTER CREATE / EDIT MODAL -->
     <div id="character-modal" class="modal-backdrop hidden">
         <div class="modal-container character-modal-container">
             <div class="modal-header char-modal-header">
@@ -469,7 +471,6 @@
             </div>
 
             <div class="modal-body char-modal-body">
-                <!-- Avatar -->
                 <div class="avatar-section">
                     <div class="avatar-upload-area" id="avatar-preview-area" onclick="triggerAvatarUpload()">
                         <div id="avatar-placeholder" class="avatar-placeholder">
@@ -492,7 +493,6 @@
                     </div>
                 </div>
 
-                <!-- Fields -->
                 <div class="char-form-fields">
                     <div class="form-row">
                         <div class="form-group">
@@ -545,7 +545,6 @@
                             placeholder="Describe the world, setting, and scenario context..."></textarea>
                     </div>
 
-                    <!-- Advanced -->
                     <div class="advanced-section">
                         <button class="advanced-toggle" onclick="toggleAdvanced()" id="advanced-toggle-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -609,7 +608,6 @@
                                 </div>
                             </div>
 
-                            <!-- Name Calling Toggle -->
                             <div class="name-calling-toggle-section">
                                 <div class="setting-item glass-setting">
                                     <div class="setting-info">
@@ -651,7 +649,6 @@
         </div>
     </div>
 
-    <!-- ===== EXPORT CHARACTER MODAL ===== -->
     <div id="export-modal" class="modal-backdrop hidden">
         <div class="modal-container export-modal-container">
             <div class="modal-header">
@@ -663,7 +660,6 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Character Preview -->
                 <div id="export-char-info"></div>
 
                 <div class="export-info-banner">
@@ -679,7 +675,6 @@
                     </div>
                 </div>
 
-                <!-- Code Area -->
                 <div class="form-group">
                     <label class="form-label">
                         <span class="label-icon">🔑</span>Character Code
@@ -689,7 +684,6 @@
                         onclick="this.select()"></textarea>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="export-actions">
                     <button class="btn-primary auto-width" id="export-copy-btn" onclick="copyExportCode()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -719,7 +713,6 @@
         </div>
     </div>
 
-    <!-- ===== IMPORT CHARACTER MODAL ===== -->
     <div id="import-modal" class="modal-backdrop hidden">
         <div class="modal-container import-modal-container">
             <div class="modal-header">
@@ -742,14 +735,12 @@
                     </div>
                 </div>
 
-                <!-- Code Input -->
                 <div class="form-group">
                     <label class="form-label"><span class="label-icon">📋</span>Character Code</label>
                     <textarea id="import-code" class="form-textarea import-code-textarea" rows="5"
                         placeholder="Paste the character code here..."></textarea>
                 </div>
 
-                <!-- Buttons Row -->
                 <div class="import-actions">
                     <button class="btn-primary auto-width" onclick="previewImportCode()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -776,13 +767,10 @@
                         onchange="processImportFile(event)" />
                 </div>
 
-                <!-- Error -->
                 <div id="import-error" class="import-error hidden"></div>
 
-                <!-- Preview -->
                 <div id="import-preview" class="import-preview hidden"></div>
 
-                <!-- Confirm Button -->
                 <button id="import-confirm-btn" class="btn-primary hidden import-confirm-btn" onclick="confirmImport()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14" />
@@ -793,7 +781,6 @@
         </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
     <div id="settings-modal" class="modal-backdrop hidden">
         <div class="modal-container settings-modal-container">
             <div class="modal-header">
@@ -1004,7 +991,6 @@
         </div>
     </div>
 
-    <!-- CONTEXT MENU -->
     <div id="context-menu" class="context-menu hidden">
         <button onclick="contextAction('edit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="1.5">
@@ -1030,7 +1016,6 @@
             </svg>Delete</button>
     </div>
 
-    <!-- MESSAGE ACTIONS MENU -->
     <div id="message-actions-menu" class="context-menu message-actions-menu hidden" onclick="event.stopPropagation()">
         <button onclick="messageAction('copy')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1070,7 +1055,6 @@
         </button>
     </div>
 
-    <!-- DELETE MESSAGE MODAL -->
     <div id="message-delete-modal" class="modal-backdrop hidden message-delete-modal">
         <div class="modal-container message-delete-container">
             <div class="modal-header">
@@ -1082,20 +1066,20 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="message-delete-helper">Choose whether to delete just the selected message pair or trim the conversation from this point onward.</p>
+                <p class="message-delete-helper">Choose whether to delete just the selected message pair or trim the
+                    conversation from this point onward.</p>
                 <div class="message-delete-preview" id="delete-message-preview"></div>
             </div>
             <div class="modal-footer message-delete-options">
-                <button class="btn-secondary" onclick="deleteSelectedMessage('single')">Delete this message only</button>
+                <button class="btn-secondary" onclick="deleteSelectedMessage('single')">Delete this message
+                    only</button>
                 <button class="btn-danger" onclick="deleteSelectedMessage('fromHere')">Delete from here onward</button>
             </div>
         </div>
     </div>
 
-    <!-- TOAST CONTAINER -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- MEMORY PANEL -->
     <div id="memory-panel" class="memory-panel hidden">
         <div class="memory-header">
             <h3>📋 Context Inspector</h3>

@@ -3823,3 +3823,650 @@ img {
 [dir="rtl"] .topbar-char-info:hover {
     transform: translate(50%, -50%) translateY(-1px);
 }
+
+/* ============================================================ */
+/* ===== SIDEBAR & API MODAL — REFRESH v4 ===== */
+/* ============================================================ */
+
+/* ---------- SIDEBAR SPACING REFINEMENT ---------- */
+.sidebar-user-profile {
+    padding: 10px 12px;
+    margin: 10px 10px 0;
+    gap: 11px;
+    border-radius: 16px;
+}
+
+.sup-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+}
+
+.sidebar-actions {
+    padding: 10px 10px 4px;
+}
+
+.sidebar-actions-row {
+    gap: 7px;
+}
+
+.btn-create-character,
+.btn-import-character {
+    padding: 9px 14px;
+    font-size: 12.5px;
+    border-radius: 12px;
+}
+
+/* ---------- GALLERY BANNER (NEW) ---------- */
+.sidebar-gallery-wrap {
+    padding: 4px 10px 6px;
+    flex-shrink: 0;
+}
+
+.btn-gallery-banner {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg,
+            rgba(139, 92, 246, 0.14) 0%,
+            rgba(96, 165, 250, 0.10) 50%,
+            rgba(244, 114, 182, 0.08) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    box-shadow:
+        var(--glass-edge),
+        0 4px 14px rgba(139, 92, 246, 0.08);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    color: var(--text-primary);
+    text-align: left;
+    overflow: hidden;
+    transition: var(--transition-bounce);
+    cursor: pointer;
+}
+
+.btn-gallery-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+.btn-gallery-banner:hover {
+    transform: translateY(-2px);
+    border-color: rgba(167, 139, 250, 0.55);
+    background:
+        linear-gradient(135deg,
+            rgba(139, 92, 246, 0.22) 0%,
+            rgba(96, 165, 250, 0.18) 50%,
+            rgba(244, 114, 182, 0.14) 100%);
+    box-shadow:
+        var(--glass-edge),
+        0 10px 28px rgba(139, 92, 246, 0.28),
+        0 0 24px rgba(167, 139, 250, 0.18);
+}
+
+.btn-gallery-banner:hover::before {
+    transform: translateX(100%);
+}
+
+.btn-gallery-banner:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.gallery-banner-glow {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.5) 0%, transparent 70%);
+    filter: blur(12px);
+    opacity: 0.6;
+    transition: var(--transition);
+    pointer-events: none;
+}
+
+.btn-gallery-banner:hover .gallery-banner-glow {
+    opacity: 1;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.8) 0%, transparent 70%);
+}
+
+.gallery-banner-icon {
+    position: relative;
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grad-main);
+    box-shadow:
+        0 4px 12px rgba(139, 92, 246, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    transition: var(--transition-bounce);
+}
+
+.btn-gallery-banner:hover .gallery-banner-icon {
+    transform: rotate(-6deg) scale(1.08);
+    box-shadow:
+        0 6px 18px rgba(139, 92, 246, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+.gallery-banner-icon svg {
+    width: 17px;
+    height: 17px;
+    color: #fff;
+}
+
+.gallery-banner-text {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.gallery-banner-title {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    background: linear-gradient(90deg, var(--accent-light), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.gallery-banner-sub {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 1px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+}
+
+.gallery-banner-arrow {
+    position: relative;
+    z-index: 1;
+    width: 15px;
+    height: 15px;
+    color: var(--accent-light);
+    opacity: 0.6;
+    transition: var(--transition-bounce);
+    flex-shrink: 0;
+}
+
+.btn-gallery-banner:hover .gallery-banner-arrow {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+/* Light theme adjustments for gallery banner */
+[data-theme="light"] .btn-gallery-banner {
+    background:
+        linear-gradient(135deg,
+            rgba(139, 92, 246, 0.08) 0%,
+            rgba(96, 165, 250, 0.06) 50%,
+            rgba(244, 114, 182, 0.05) 100%);
+    border-color: rgba(139, 92, 246, 0.18);
+}
+
+[data-theme="light"] .btn-gallery-banner:hover {
+    background:
+        linear-gradient(135deg,
+            rgba(139, 92, 246, 0.14) 0%,
+            rgba(96, 165, 250, 0.10) 50%,
+            rgba(244, 114, 182, 0.08) 100%);
+}
+
+/* ---------- SEARCH BAR REFINEMENT ---------- */
+.sidebar-search {
+    padding: 4px 10px 8px;
+}
+
+.search-input-wrap input {
+    padding: 9px 10px 9px 32px;
+    font-size: 12.5px;
+    border-radius: 12px;
+    transition: var(--transition);
+}
+
+.search-input-wrap input:focus {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.04);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+
+/* ---------- SOFTER CHARACTER CARD HOVER (Native Feel) ---------- */
+.char-card {
+    padding: 9px 11px;
+    margin: 1px 6px;
+    border-radius: 13px;
+    transition:
+        background-color 0.22s ease,
+        border-color 0.22s ease,
+        transform 0.18s ease,
+        box-shadow 0.22s ease;
+}
+
+.char-card:hover {
+    background: var(--bg-glass-hover);
+    border-color: var(--border-subtle);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.char-card:active {
+    transform: translateY(0) scale(0.985);
+    transition-duration: 0.08s;
+}
+
+.char-card.active {
+    background: rgba(139, 92, 246, 0.10);
+    border-color: rgba(139, 92, 246, 0.22);
+}
+
+.char-card.active::before {
+    left: -6px;
+    width: 3px;
+    height: 50%;
+    box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.char-avatar {
+    width: 38px;
+    height: 38px;
+}
+
+/* ============================================================ */
+/* ===== API MODAL — PREMIUM REFRESH ===== */
+/* ============================================================ */
+.api-modal-container {
+    max-width: 520px;
+    border-radius: 28px;
+    background:
+        linear-gradient(180deg,
+            rgba(20, 20, 30, 0.95) 0%,
+            rgba(15, 15, 23, 0.92) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+        var(--glass-edge),
+        0 24px 64px rgba(0, 0, 0, 0.55),
+        0 0 50px rgba(139, 92, 246, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.api-modal-container::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 220px;
+    background: radial-gradient(ellipse, rgba(139, 92, 246, 0.25) 0%, transparent 65%);
+    pointer-events: none;
+    filter: blur(40px);
+}
+
+.api-modal-container .modal-header {
+    padding: 32px 32px 4px;
+    position: relative;
+    z-index: 1;
+}
+
+.api-modal-container .modal-logo-row {
+    font-size: 22px;
+}
+
+.api-modal-container .logo-icon-sm {
+    width: 34px;
+    height: 34px;
+    filter: drop-shadow(0 4px 12px rgba(139, 92, 246, 0.5));
+}
+
+.api-modal-container .modal-subtitle {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    opacity: 0.85;
+}
+
+.api-modal-container .modal-body {
+    padding: 24px 32px 8px;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ----- Modern Inputs in API Modal ----- */
+.api-modal-container .form-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    opacity: 0.9;
+}
+
+.api-modal-container .form-input {
+    background: rgba(8, 8, 14, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition:
+        border-color 0.22s ease,
+        background-color 0.22s ease,
+        box-shadow 0.25s ease,
+        transform 0.18s ease;
+}
+
+.api-modal-container .form-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.api-modal-container .form-input:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(12, 12, 20, 0.7);
+}
+
+.api-modal-container .form-input:focus {
+    border-color: rgba(167, 139, 250, 0.65);
+    background: rgba(20, 16, 36, 0.7);
+    box-shadow:
+        0 0 0 4px rgba(139, 92, 246, 0.18),
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 0 24px rgba(139, 92, 246, 0.18);
+    transform: translateY(-1px);
+}
+
+.api-modal-container .input-hint {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    opacity: 0.75;
+    padding-left: 2px;
+}
+
+/* ----- Toggle Visibility (Eye Icon) ----- */
+.api-modal-container .toggle-visibility {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.api-modal-container .toggle-visibility:hover {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-light);
+}
+
+/* ----- Quick Model Pills ----- */
+.api-modal-container .quick-models {
+    margin-top: 6px;
+    gap: 6px;
+}
+
+.api-modal-container .model-pill {
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 99px;
+    transition: var(--transition-bounce);
+}
+
+.api-modal-container .model-pill:hover {
+    background: rgba(139, 92, 246, 0.18);
+    border-color: rgba(167, 139, 250, 0.45);
+    color: var(--accent-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+/* ----- Test Connection Button — Premium ----- */
+.api-modal-container .modal-test-row {
+    margin-top: 4px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    gap: 12px;
+}
+
+.api-modal-container .btn-test {
+    padding: 11px 18px;
+    background: linear-gradient(135deg,
+            rgba(96, 165, 250, 0.15) 0%,
+            rgba(139, 92, 246, 0.12) 100%);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 12px;
+    color: var(--accent-light);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow:
+        var(--glass-edge),
+        0 4px 12px rgba(96, 165, 250, 0.12);
+    transition: var(--transition-bounce);
+    position: relative;
+    overflow: hidden;
+}
+
+.api-modal-container .btn-test::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.12) 50%,
+            transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.api-modal-container .btn-test:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg,
+            rgba(96, 165, 250, 0.25) 0%,
+            rgba(139, 92, 246, 0.20) 100%);
+    border-color: rgba(167, 139, 250, 0.55);
+    box-shadow:
+        var(--glass-edge),
+        0 8px 20px rgba(96, 165, 250, 0.25),
+        0 0 20px rgba(167, 139, 250, 0.15);
+    color: #fff;
+}
+
+.api-modal-container .btn-test:hover::before {
+    transform: translateX(100%);
+}
+
+.api-modal-container .btn-test:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.api-modal-container .btn-test:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.api-modal-container .btn-icon {
+    font-size: 15px;
+}
+
+.api-modal-container .test-status {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.api-modal-container .test-status.success {
+    background: rgba(74, 222, 128, 0.12);
+    color: var(--accent-green);
+}
+
+.api-modal-container .test-status.error {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--accent-red);
+}
+
+.api-modal-container .test-status.loading {
+    background: rgba(96, 165, 250, 0.12);
+    color: var(--accent-blue);
+}
+
+/* ----- Continue Button — Hero Premium ----- */
+.api-modal-container .modal-footer {
+    padding: 16px 32px 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.api-modal-container #save-api-btn {
+    padding: 16px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 16px;
+    background: linear-gradient(135deg,
+            #8b5cf6 0%,
+            #6366f1 50%,
+            #3b82f6 100%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    box-shadow:
+        0 8px 24px rgba(139, 92, 246, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 1px 0 rgba(255, 255, 255, 0.2) inset;
+    transition:
+        background-position 0.5s ease,
+        transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.api-modal-container #save-api-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.18) 50%,
+            transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+.api-modal-container #save-api-btn:hover {
+    background-position: 100% 50%;
+    transform: translateY(-3px);
+    box-shadow:
+        0 14px 36px rgba(139, 92, 246, 0.6),
+        0 0 30px rgba(96, 165, 250, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+        0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.api-modal-container #save-api-btn:hover::after {
+    transform: translateX(100%);
+}
+
+.api-modal-container #save-api-btn:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
+}
+
+.api-modal-container #save-api-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ----- Light Theme Adjustments for API Modal ----- */
+[data-theme="light"] .api-modal-container {
+    background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(248, 250, 252, 0.92) 100%);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+        var(--glass-edge),
+        0 24px 64px rgba(0, 0, 0, 0.12),
+        0 0 50px rgba(139, 92, 246, 0.08);
+}
+
+[data-theme="light"] .api-modal-container .form-input {
+    background: rgba(241, 245, 249, 0.7);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .api-modal-container .form-input:focus {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow:
+        0 0 0 4px rgba(139, 92, 246, 0.15),
+        0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="light"] .api-modal-container .modal-test-row {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ----- Mobile Responsiveness ----- */
+@media (max-width: 480px) {
+    .api-modal-container {
+        border-radius: 20px;
+    }
+
+    .api-modal-container .modal-header,
+    .api-modal-container .modal-body,
+    .api-modal-container .modal-footer {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .btn-gallery-banner {
+        padding: 10px 12px;
+    }
+
+    .gallery-banner-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .gallery-banner-title {
+        font-size: 12.5px;
+    }
+}
