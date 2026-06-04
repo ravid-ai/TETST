@@ -306,7 +306,7 @@
                         <span>Create your first AI character!</span>
                     </div>
                 </div>
-                <div class="sidebar-section">
+                <div class="sidebar-section hidden">
                     <div class="section-label">Featured</div>
                     <div id="featured-characters-list" class="characters-list"></div>
                 </div>
@@ -406,12 +406,6 @@
                                 <line x1="12" y1="3" x2="12" y2="15" />
                             </svg>
                             Import a Character
-                        </button>
-                        <button class="btn-secondary large" onclick="loadFeaturedCharacter()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="5,3 19,12 5,21" />
-                            </svg>
-                            Try a Featured Character
                         </button>
                     </div>
                 </div>
@@ -783,20 +777,42 @@
 
     <div id="settings-modal" class="modal-backdrop hidden">
         <div class="modal-container settings-modal-container">
-            <div class="modal-header">
-                <h2>⚙️ Settings</h2>
+            <div class="modal-header settings-modal-header">
+                <div class="settings-header-content">
+                    <div class="settings-header-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Settings</h2>
+                        <p class="settings-header-sub">Customize your CharacterVerse experience</p>
+                    </div>
+                </div>
                 <button class="modal-close-btn" onclick="closeSettingsModal()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="settings-tabs">
-                    <button class="settings-tab active" onclick="switchSettingsTab('general',this)">General</button>
-                    <button class="settings-tab" onclick="switchSettingsTab('appearance',this)">Appearance</button>
-                    <button class="settings-tab" onclick="switchSettingsTab('chat',this)">Chat</button>
-                    <button class="settings-tab" onclick="switchSettingsTab('privacy',this)">Privacy</button>
+            <div class="modal-body settings-modal-body">
+                <div class="settings-tabs-wrap">
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" onclick="switchSettingsTab('general',this)">
+                            <span class="tab-icon">⚙</span><span class="tab-label">General</span>
+                        </button>
+                        <button class="settings-tab" onclick="switchSettingsTab('appearance',this)">
+                            <span class="tab-icon">🎨</span><span class="tab-label">Appearance</span>
+                        </button>
+                        <button class="settings-tab" onclick="switchSettingsTab('chat',this)">
+                            <span class="tab-icon">💬</span><span class="tab-label">Chat</span>
+                        </button>
+                        <button class="settings-tab" onclick="switchSettingsTab('privacy',this)">
+                            <span class="tab-icon">🔒</span><span class="tab-label">Privacy</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="settings-general" class="settings-panel active">
@@ -829,7 +845,6 @@
                             <button class="dir-btn" id="dir-btn-rtl" onclick="setDirection('rtl',this)">→ RTL</button>
                         </div>
                     </div>
-
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Translation Language</div>
@@ -858,6 +873,7 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Theme</div>
+                            <div class="setting-desc">Choose your visual style</div>
                         </div>
                         <div class="theme-options">
                             <button class="theme-btn active" id="theme-btn-dark"
@@ -877,6 +893,7 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Font Size</div>
+                            <div class="setting-desc">Adjust reading comfort</div>
                         </div>
                         <div class="slider-group compact">
                             <input type="range" class="range-slider" min="12" max="20" value="15" id="font-size-slider"
@@ -889,9 +906,10 @@
                             <div class="setting-name">Animations</div>
                             <div class="setting-desc">UI transitions and effects</div>
                         </div>
-                        <div class="toggle-switch-wrap"><input type="checkbox" id="animations-toggle"
-                                class="toggle-checkbox" checked /><label for="animations-toggle"
-                                class="toggle-switch"></label></div>
+                        <div class="toggle-switch-wrap">
+                            <input type="checkbox" id="animations-toggle" class="toggle-checkbox" checked />
+                            <label for="animations-toggle" class="toggle-switch"></label>
+                        </div>
                     </div>
                 </div>
 
@@ -901,9 +919,10 @@
                             <div class="setting-name">Streaming Responses</div>
                             <div class="setting-desc">Typewriter effect for responses</div>
                         </div>
-                        <div class="toggle-switch-wrap"><input type="checkbox" id="streaming-toggle"
-                                class="toggle-checkbox" checked /><label for="streaming-toggle"
-                                class="toggle-switch"></label></div>
+                        <div class="toggle-switch-wrap">
+                            <input type="checkbox" id="streaming-toggle" class="toggle-checkbox" checked />
+                            <label for="streaming-toggle" class="toggle-switch"></label>
+                        </div>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
@@ -920,19 +939,22 @@
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Show Timestamps</div>
+                            <div class="setting-desc">Display time on each message</div>
                         </div>
-                        <div class="toggle-switch-wrap"><input type="checkbox" id="timestamps-toggle"
-                                class="toggle-checkbox" checked /><label for="timestamps-toggle"
-                                class="toggle-switch"></label></div>
+                        <div class="toggle-switch-wrap">
+                            <input type="checkbox" id="timestamps-toggle" class="toggle-checkbox" checked />
+                            <label for="timestamps-toggle" class="toggle-switch"></label>
+                        </div>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Roleplay Enhancer</div>
                             <div class="setting-desc">Auto-enhance prompts for deeper roleplay</div>
                         </div>
-                        <div class="toggle-switch-wrap"><input type="checkbox" id="roleplay-enhancer"
-                                class="toggle-checkbox" checked /><label for="roleplay-enhancer"
-                                class="toggle-switch"></label></div>
+                        <div class="toggle-switch-wrap">
+                            <input type="checkbox" id="roleplay-enhancer" class="toggle-checkbox" checked />
+                            <label for="roleplay-enhancer" class="toggle-switch"></label>
+                        </div>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
@@ -948,18 +970,26 @@
                 </div>
 
                 <div id="settings-privacy" class="settings-panel">
-
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-name">Backup & Restore</div>
                             <div class="setting-desc">Export all CharacterVerse data or import a saved backup</div>
                         </div>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                        <div class="setting-action-group">
                             <button class="btn-secondary sm" onclick="exportFullBackup()">Export Backup</button>
                             <button class="btn-ghost sm" onclick="triggerBackupImport()">Import Backup</button>
                             <input type="file" id="backup-file-input" accept=".json,application/json" class="hidden"
                                 onchange="handleBackupImport(event)" />
                         </div>
+                    </div>
+                    <div class="danger-zone-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span>Danger Zone</span>
                     </div>
                     <div class="setting-item danger-zone">
                         <div class="setting-info">
@@ -984,7 +1014,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer row-footer">
+            <div class="modal-footer row-footer settings-modal-footer">
                 <button class="btn-ghost" onclick="closeSettingsModal()">Cancel</button>
                 <button class="btn-primary auto-width" onclick="saveSettings()">Save Settings</button>
             </div>
