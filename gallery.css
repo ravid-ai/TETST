@@ -39,7 +39,10 @@ body {
   transition: var(--transition-bounce);
 }
 
-.gt-btn svg { width: 18px; height: 18px; }
+.gt-btn svg {
+  width: 18px;
+  height: 18px;
+}
 
 .gt-btn:hover {
   background: var(--bg-glass-hover);
@@ -57,10 +60,22 @@ body {
   text-align: center;
 }
 
-.gt-logo { width: 34px; height: 34px; }
-.gt-logo svg { width: 100%; height: 100%; }
+.gt-logo {
+  width: 34px;
+  height: 34px;
+}
 
-.gt-title { display: flex; flex-direction: column; line-height: 1.1; }
+.gt-logo svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gt-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
 .gt-name {
   font-family: var(--font-display);
   font-size: 16px;
@@ -69,9 +84,17 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.gt-sub { font-size: 12px; color: var(--text-muted); }
 
-.gt-right { width: 110px; display: flex; justify-content: flex-end; }
+.gt-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gt-right {
+  width: 110px;
+  display: flex;
+  justify-content: flex-end;
+}
 
 .gt-pill {
   font-size: 12px;
@@ -154,7 +177,10 @@ body {
   transition: var(--transition-bounce);
 }
 
-.gclear svg { width: 16px; height: 16px; }
+.gclear svg {
+  width: 16px;
+  height: 16px;
+}
 
 .gclear:hover {
   background: var(--bg-glass-hover);
@@ -171,7 +197,9 @@ body {
   scrollbar-width: none;
 }
 
-.gchips::-webkit-scrollbar { height: 0; }
+.gchips::-webkit-scrollbar {
+  height: 0;
+}
 
 .gchip {
   flex: 0 0 auto;
@@ -228,20 +256,39 @@ body {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 18px;
   margin-top: 14px;
 }
 
 @media (max-width: 980px) {
-  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-  .gt-right { width: 88px; }
-  .gt-brand { justify-content: flex-start; text-align: left; }
-}
-@media (max-width: 560px) {
-  .gallery-grid { grid-template-columns: 1fr; }
-  .gt-brand { justify-content: center; text-align: center; }
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gt-right {
+    width: 88px;
+  }
+
+  .gt-brand {
+    justify-content: flex-start;
+    text-align: left;
+  }
 }
 
+@media (max-width: 560px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gt-brand {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* =========================================================
+   ===== GALLERY CARD — PORTRAIT / GLASSMORPHISM UPGRADE =====
+   ========================================================= */
 .gcard {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
@@ -249,79 +296,128 @@ body {
   box-shadow: var(--glass-edge), var(--shadow-md);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  padding: 14px;
+  padding: 0;
+  /* پدینگ رو حذف کردیم تا عکس بچسبه به لبه‌ها */
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   transition: var(--transition-bounce);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 
+/* درخشش (Glow) شیشه‌ای روی هاور */
 .gcard::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 25% 10%, rgba(139, 92, 246, 0.12), transparent 45%);
+  background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.22), transparent 60%);
   opacity: 0;
   transition: var(--transition);
   pointer-events: none;
+  z-index: 2;
 }
 
 .gcard:hover {
-  transform: translateY(-3px);
+  transform: translateY(-6px);
   background: var(--bg-card-hover);
-  border-color: var(--border-strong);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow:
+    var(--glass-edge),
+    0 18px 44px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(139, 92, 246, 0.28);
+  /* << GLOW شیشه‌ای */
 }
-.gcard:hover::after { opacity: 1; }
 
+.gcard:hover::after {
+  opacity: 1;
+}
+
+/* --- بخش بالایی کارت = حالا عمودی --- */
 .gcard-top {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  flex-direction: column;
+  /* << افقی → عمودی */
+  gap: 0;
+  align-items: stretch;
 }
 
+/* --- آواتار = حالا تصویر بزرگ تمام‌عرض (بنر) --- */
 .gcard-avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  /* << نسبت تصویر کارت. می‌تونی 1/1 یا 4/3 بذاری */
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.18), transparent 70%),
+    var(--bg-glass);
+  border: none;
   display: grid;
   place-items: center;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.06);
+  box-shadow: none;
+  position: relative;
 }
 
-.gcard-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.gcard-avatar span { font-size: 26px; }
+.gcard-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
 
-.gcard:hover .gcard-avatar {
-  transform: scale(1.04);
-  transition: var(--transition-bounce);
+.gcard-avatar span {
+  font-size: 64px;
+}
+
+/* اموجی/حروف اول بزرگ‌تر */
+
+/* گرادیان محو پایین عکس تا متن خوانا بمونه */
+.gcard-avatar::after {
+  content: none;
+  /* این خط سایه سیاه رو کلا پاک میکنه */
+}
+
+.gcard:hover .gcard-avatar img {
+  transform: scale(1.07);
+}
+
+/* --- متن نام/عنوان: حالا زیر عکس، با کمی هم‌پوشانی زیبا --- */
+.gcard-top>div:last-child {
+  padding: 12px 14px 4px;
+  /* یه فاصله تمیز از بالا بهش میدیم */
+  margin-top: 0;
+  /* مارجین منفی رو حذف میکنیم که نره تو شکم عکس */
+  position: relative;
+  z-index: 3;
 }
 
 .gcard-name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 16px;
-  line-height: 1.2;
+  font-size: 17px;
+  line-height: 1.25;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
 }
 
 .gcard-title {
   margin-top: 3px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
+/* --- توضیحات و تگ‌ها: داخل پدینگ --- */
 .gcard-desc {
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.6;
+  padding: 10px 14px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -330,30 +426,34 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 10px 14px 0;
 }
 
 .gtag {
   font-size: 11px;
   padding: 4px 9px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
+  background: rgba(139, 92, 246, 0.10);
+  border: 1px solid rgba(139, 92, 246, 0.22);
   border-radius: 999px;
-  color: var(--text-secondary);
+  color: var(--accent-light);
 }
 
 .gcard-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 2px;
+  padding: 14px;
+  margin-top: auto;
+  /* دکمه‌ها همیشه ته کارت */
 }
 
-/* Make card feel clickable (details) */
 .gcard-click {
   cursor: pointer;
 }
 
-/* ===== MODAL ===== */
+/* =========================================================
+   ===== MODAL — PREMIUM GLASSMORPHISM UPGRADE =====
+   ========================================================= */
 .gmodal-backdrop {
   position: fixed;
   inset: 0;
@@ -369,137 +469,227 @@ body {
 }
 
 .gmodal {
-  width: min(680px, 100%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
+  width: min(640px, 100%);
+  max-height: 85vh;
+  /* کمی کوتاه‌تر کردم که تو موبایل عالی جا بشه */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
-  box-shadow: var(--glass-edge), var(--shadow-lg), var(--shadow-glow);
-  overflow: hidden;
+  box-shadow:
+    var(--glass-edge),
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(139, 92, 246, 0.18);
   position: relative;
   animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 👇 جادوی چیدمان جدید اینجاست */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .gmodal-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: var(--bg-glass);
-  border: 1px solid transparent;
-  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
   display: grid;
   place-items: center;
   transition: var(--transition-bounce);
+  z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
-.gmodal-close svg { width: 18px; height: 18px; }
+.gmodal-close svg {
+  width: 18px;
+  height: 18px;
+}
 
 .gmodal-close:hover {
-  background: var(--bg-glass-hover);
+  background: rgba(0, 0, 0, 0.6);
   color: var(--text-primary);
   border-color: var(--border-subtle);
   transform: scale(1.08) rotate(90deg);
 }
 
+/* --- هدر مودال = بنر بزرگ با آواتار درشت --- */
 .gmodal-header {
   display: flex;
-  gap: 14px;
+  flex-direction: column;
   align-items: center;
-  padding: 18px 18px 12px;
+  text-align: center;
+  gap: 14px;
+  padding: 32px 24px 22px;
   border-bottom: 1px solid var(--border-subtle);
-  background: radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.14), transparent 55%);
-}
+  background:
+    radial-gradient(circle at 50% -10%, rgba(139, 92, 246, 0.28), transparent 60%),
+    radial-gradient(circle at 80% 30%, rgba(96, 165, 250, 0.14), transparent 50%);
+  position: relative;
 
-.gmodal-avatar {
-  width: 82px;
-  height: 82px;
-  border-radius: 22px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.08);
+  /* 👇 هدر (عکس و اسم) ثابت می‌مونه */
   flex-shrink: 0;
 }
 
-.gmodal-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.gmodal-avatar span { font-size: 34px; }
+.gmodal-avatar {
+  width: 116px;
+  /* << آواتار بسیار بزرگ‌تر */
+  height: 116px;
+  border-radius: 28px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 6px rgba(139, 92, 246, 0.12),
+    0 12px 36px rgba(139, 92, 246, 0.35);
+  flex-shrink: 0;
+}
+
+.gmodal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gmodal-avatar span {
+  font-size: 50px;
+}
+
+.gmodal-headtext {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 .gmodal-name {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1.2;
+  background: var(--grad-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .gmodal-sub {
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.6;
 }
 
 .gmodal-body {
-  padding: 14px 18px 10px;
+  padding: 20px 22px 12px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
+
+  /* 👇 فقط این بخش متنی اسکرول میشه! */
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* برای روون شدن اسکرول تو آیفون */
 }
 
+/* --- پنل‌های دیتای شیشه‌ای با خط رنگی سمت چپ --- */
 .gmodal-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(120deg, rgba(139, 92, 246, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid rgba(139, 92, 246, 0.7);
+  /* << Accent border */
   border-radius: var(--radius-lg);
-  padding: 12px 12px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+  transition: var(--transition);
+}
+
+.gmodal-section:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-left-color: var(--accent-light);
+  background: linear-gradient(120deg, rgba(139, 92, 246, 0.10), rgba(255, 255, 255, 0.03));
 }
 
 .gmodal-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--accent-light);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gmodal-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  box-shadow: 0 0 8px var(--accent-light);
 }
 
 .gmodal-text {
-  margin-top: 7px;
+  margin-top: 9px;
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.75;
 }
 
 .gmodal-open {
-  margin-top: 7px;
+  margin-top: 9px;
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.75;
   white-space: pre-wrap;
+  font-style: italic;
 }
 
 .gmodal-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 2px 2px 0;
+  padding: 2px 2px 4px;
 }
 
 .gmodal-actions {
-  padding: 14px 18px 18px;
+  padding: 16px 22px 22px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+
+  /* 👇 دکمه‌ها همیشه کف مودال ثابت می‌مونن */
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
 }
 
 @media (max-width: 560px) {
-  .gallery-filters { top: 74px; }
-  .gmodal-actions { grid-template-columns: 1fr; }
-  .gmodal-header { padding-right: 54px; }
+  .gallery-filters {
+    top: 74px;
+  }
+
+  .gmodal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .gmodal-avatar {
+    width: 96px;
+    height: 96px;
+  }
 }
 
+/* ===== BUTTONS ===== */
 .gbtn {
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
   background: var(--bg-glass);
@@ -513,7 +703,11 @@ body {
   transition: var(--transition-bounce);
 }
 
-.gbtn svg { width: 16px; height: 16px; opacity: 0.95; }
+.gbtn svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.95;
+}
 
 .gbtn:hover {
   transform: translateY(-2px);
@@ -527,8 +721,12 @@ body {
   color: #fff;
   box-shadow: 0 10px 24px rgba(139, 92, 246, 0.35);
 }
-.gbtn.primary:hover { box-shadow: 0 14px 30px rgba(139, 92, 246, 0.5); }
 
+.gbtn.primary:hover {
+  box-shadow: 0 14px 30px rgba(139, 92, 246, 0.5);
+}
+
+/* ===== SENTINEL / EMPTY ===== */
 .gallery-sentinel {
   margin: 18px auto 0;
   width: fit-content;
@@ -546,22 +744,42 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  border: 2px solid rgba(255,255,255,0.12);
-  border-top-color: rgba(255,255,255,0.55);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.55);
   animation: spin 0.9s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-.sentinel-text { font-size: 13px; }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sentinel-text {
+  font-size: 13px;
+}
 
 .gallery-empty {
   margin-top: 24px;
   padding: 26px;
   border: 1px dashed var(--border-default);
   border-radius: var(--radius-xl);
-  background: rgba(255,255,255,0.02);
+  background: rgba(255, 255, 255, 0.02);
   text-align: center;
 }
-.gallery-empty-icon { font-size: 34px; }
-.gallery-empty-title { margin-top: 10px; font-weight: 800; font-family: var(--font-display); }
-.gallery-empty-sub { margin-top: 6px; color: var(--text-secondary); font-size: 13px; }
+
+.gallery-empty-icon {
+  font-size: 34px;
+}
+
+.gallery-empty-title {
+  margin-top: 10px;
+  font-weight: 800;
+  font-family: var(--font-display);
+}
+
+.gallery-empty-sub {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
