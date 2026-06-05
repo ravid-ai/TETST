@@ -307,8 +307,8 @@ img {
 /* ===== APP ===== */
 .app {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100dvh;
+    height: 100dvh;
     overflow: hidden;
     position: relative;
     background-image:
@@ -3381,6 +3381,7 @@ img {
     height: auto;
     min-height: 64px;
     padding: 14px 18px;
+    /* <--- فقط همین خط رو عوض کن */
     background: transparent !important;
     border: 0 !important;
     box-shadow: none !important;
