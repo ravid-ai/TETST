@@ -307,7 +307,8 @@ img {
 /* ===== APP ===== */
 .app {
     display: flex;
-    width: 100dvh;
+    width: 100vw;
+    /* <--- اینو درست کن (vw یعنی عرض کامل صفحه) */
     height: 100dvh;
     overflow: hidden;
     position: relative;
@@ -3382,7 +3383,7 @@ img {
     gap: 12px;
     height: auto;
     min-height: 64px;
-    padding: 14px 18px;
+    padding: max(14px, env(safe-area-inset-top)) 18px 14px;
     /* <--- فقط همین خط رو عوض کن */
     background: transparent !important;
     border: 0 !important;
