@@ -553,8 +553,11 @@ function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt
 let _wallpaperRequestSeq = 0;
 
 function normalizeWallpaperName(name = '') {
-    // lower-case + remove ALL whitespace (e.g., "Detective Kane" -> "detectivekane")
-    return String(name || '')
+    // اول پسوند برنچ رو قیچی می‌کنیم تا به اسم خالص برسیم
+    const cleanName = normalizeBranchBaseName(name);
+
+    // حالا مثل قبل تبدیلش می‌کنیم به فرمت اسم فایل
+    return String(cleanName || '')
         .toLowerCase()
         .replace(/\s+/g, '')
         .trim();
