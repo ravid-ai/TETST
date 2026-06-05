@@ -549,20 +549,19 @@ function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt
 
 
 
-// ===== DYNAMIC WALLPAPER (Chat Background) =====
-let _wallpaperRequestSeq = 0;
-
 function normalizeWallpaperName(name = '') {
-    // اول پسوند برنچ رو قیچی می‌کنیم تا به اسم خالص برسیم
-    const cleanName = normalizeBranchBaseName(name);
+    // اول پسوند Branch رو مثل قبل پاک می‌کنیم
+    let cleanName = normalizeBranchBaseName(name);
 
-    // حالا مثل قبل تبدیلش می‌کنیم به فرمت اسم فایل
+    // حالا پسوندهای (Imported) و (Copy) رو با ریجکس کامل رنده می‌کنیم
+    cleanName = cleanName.replace(/\s*\((?:Imported|Copy)\)/gi, '');
+
+    // در نهایت اسم خالص رو به هم چسبونده و کوچیک می‌کنیم
     return String(cleanName || '')
         .toLowerCase()
         .replace(/\s+/g, '')
         .trim();
 }
-
 function clearChatWallpaper() {
     const chatArea = document.getElementById('chat-area');
     if (!chatArea) return;
