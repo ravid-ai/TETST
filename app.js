@@ -554,7 +554,7 @@ function normalizeWallpaperName(name = '') {
     let cleanName = normalizeBranchBaseName(name);
 
     // حالا پسوندهای (Imported) و (Copy) رو با ریجکس کامل رنده می‌کنیم
-    cleanName = cleanName.replace(/\s*\((?:Imported|Copy)\)/gi, '');
+    cleanName = cleanName.replace(/\s*\((?:(Imported)|(Copy))\)/gi, '');
 
     // در نهایت اسم خالص رو به هم چسبونده و کوچیک می‌کنیم
     return String(cleanName || '')
