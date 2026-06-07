@@ -822,7 +822,7 @@ async function translateMessage(chatId, messageIndex) {
 
     const targetLangCode = state.settings.translateLang || 'en';
     const targetLangLabel = getTranslateLanguageLabel(targetLangCode);
-    const translationPrompt = `Translate the following text into ${targetLangLabel}. Make it sound highly natural, conversational, and colloquial (informal spoken style). Capture the exact emotion and tone of the original roleplay message. Provide ONLY the translation, without any extra text, quotes, or explanations.Make sure to translate the entire text completely and accurately without omitting any words, sentences, or details. Pay close attention to preserving the original informal, conversational style, tone, emotion, and personality of the message. I emphasize that every part of the text should be translated thoroughly, line by line and nuance by nuance, while maintaining the same natural and colloquial feel as the original. Text to translate: ${msg.content}`;
+    const translationPrompt = `You are a professional translator. Translate the following text into ${targetLangLabel}. Provide ONLY the translation, without any extra text, markdown, or explanations. Text to translate: ${msg.content}`;
 
     const key = `${chatId}:${messageIndex}`;
     const previousTranslation = msg.translation || '';
