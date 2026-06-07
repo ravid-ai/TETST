@@ -822,7 +822,10 @@ async function translateMessage(chatId, messageIndex) {
 
     const targetLangCode = state.settings.translateLang || 'en';
     const targetLangLabel = getTranslateLanguageLabel(targetLangCode);
-    const translationPrompt = `You are a professional translator. Translate the following text into ${targetLangLabel}. Provide ONLY the translation, without any extra text, markdown, or explanations. Text to translate: ${msg.content}`;
+
+    // پرامپت آپدیت شده برای لحن خودمونی و طبیعی
+    // دستور رو جدا کردیم و به صورت سیستم تعریفش کردیم
+    const systemPrompt = `Translate the user's text into ${targetLangLabel}. Make it sound highly natural, conversational, and colloquial (informal spoken style). Capture the exact emotion and tone of the original message. Provide ONLY the translation, without any extra text, quotes, or explanations. Translate completely without omitting anything.`;
 
     const key = `${chatId}:${messageIndex}`;
     const previousTranslation = msg.translation || '';
@@ -838,9 +841,12 @@ async function translateMessage(chatId, messageIndex) {
             },
             body: JSON.stringify({
                 model: state.apiModel,
-                messages: [{ role: 'user', content: translationPrompt }],
-                temperature: 0.2,
-                max_tokens: Math.min(1024, Math.max(128, Math.ceil(String(msg.content).length * 1.5)))
+                messages: [
+                    { role: 'system', content: systemPrompt }, // دستور اصلی اینجا میره
+                    { role: 'user', content: msg.content }     // فقط متن کاربر اینجا میره
+                ],
+                temperature: 0.4
+                // max_tokens حذف شد تا محدودیت نداشته باشه
             })
         });
 
