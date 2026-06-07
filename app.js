@@ -649,6 +649,24 @@ function renderChatHistory(chatId, char) {
     const msgs = document.getElementById('chat-messages');
     msgs.innerHTML = '';
     state.activeChatId = chatId;
+
+    // --- کادر معرفی کاراکتر (استایل پالی) ---
+    if (char && char.description) {
+        const introDiv = document.createElement('div');
+        introDiv.className = 'message assistant char-intro-box';
+        const avatarHtml = char.avatar ? `<img src="${char.avatar}" alt="${char.name}"/>` : `<span>${char.emoji || '🤖'}</span>`;
+        introDiv.innerHTML = `
+        <div class="message-avatar">${avatarHtml}</div>
+        <div class="message-body">
+          <div class="message-meta">
+            <div class="message-meta-left"><span class="message-sender">About ${escHtml(char.name)}</span></div>
+          </div>
+          <div class="message-bubble">${formatMessageContent(char.description)}</div>
+        </div>`;
+        msgs.appendChild(introDiv);
+    }
+    // ----------------------------------------
+
     const history = state.chatHistory[chatId] || [];
     if (history.length === 0 && char.greeting && chatId === char.id) {
         const greetMsg = { role: 'assistant', content: char.greeting, time: Date.now() };
