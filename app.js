@@ -650,22 +650,41 @@ function renderChatHistory(chatId, char) {
     msgs.innerHTML = '';
     state.activeChatId = chatId;
 
-    // --- کادر معرفی کاراکتر (استایل پالی) ---
+    // --- کادر معرفی کاراکتر (استایل پالی بدون عکس + منوی سه نقطه) ---
     if (char && char.description) {
         const introDiv = document.createElement('div');
         introDiv.className = 'message assistant char-intro-box';
-        const avatarHtml = char.avatar ? `<img src="${char.avatar}" alt="${char.name}"/>` : `<span>${char.emoji || '🤖'}</span>`;
+        introDiv.dataset.msgIndex = 'intro'; // یه شناسه خاص برای دیسکریپشن
+        introDiv.dataset.chatId = chatId;
+
+        const menuBtn = `
+            <button class="message-menu-btn" type="button" aria-label="Message actions"
+                onclick="openMessageMenu(event, '${chatId}', 'intro')">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="5" r="1.6"></circle>
+                    <circle cx="12" cy="12" r="1.6"></circle>
+                    <circle cx="12" cy="19" r="1.6"></circle>
+                </svg>
+            </button>`;
+
+        const translationHtml = char.descriptionTranslation ? `
+            <div class="message-translation">
+                <div class="message-translation-label">Translation</div>
+                <div class="message-translation-text">${escapeHtmlText(char.descriptionTranslation).replace(/\n/g, '<br>')}</div>
+            </div>` : '';
+
         introDiv.innerHTML = `
-        <div class="message-avatar">${avatarHtml}</div>
-        <div class="message-body">
+        <div class="message-body" style="width: 100%;">
           <div class="message-meta">
             <div class="message-meta-left"><span class="message-sender">About ${escHtml(char.name)}</span></div>
+            <div class="message-meta-right">${menuBtn}</div>
           </div>
           <div class="message-bubble">${formatMessageContent(char.description)}</div>
+          ${translationHtml}
         </div>`;
         msgs.appendChild(introDiv);
     }
-    // ----------------------------------------
+    // -----------------------------------------------------------
 
     const history = state.chatHistory[chatId] || [];
     if (history.length === 0 && char.greeting && chatId === char.id) {
@@ -1260,43 +1279,94 @@ function closeMessageMenu() {
     state.messageMenuTarget = null;
 }
 
-async function messageAction(action) {
-    const target = state.messageMenuTarget;
-    closeMessageMenu();
-    if (!target) return;
+async function translateMessage(chatId, messageIndex) {
+    if (!state.apiKey || !state.apiUrl) {
+        showToast('error', 'Configure API settings first');
+        showAPIModal();
+        return;
+    }
 
-    if (action === 'copy') {
-        const text = state.chatHistory[target.chatId]?.[target.messageIndex]?.content || '';
-        if (!text) return;
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch (err) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.left = '-9999px';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
+    // تشخیص اینکه متن چته یا دیسکریپشن کاراکتر
+    let msg;
+    if (messageIndex === 'intro') {
+        const char = getCharacterForChat(chatId);
+        if (!char) return;
+        msg = { content: char.description, translation: char.descriptionTranslation || '' };
+    } else {
+        const history = state.chatHistory[chatId] || [];
+        msg = history[messageIndex];
+    }
+
+    if (!msg || !msg.content) return;
+
+    const targetLangCode = state.settings.translateLang || 'en';
+    const targetLangLabel = getTranslateLanguageLabel(targetLangCode);
+
+    const systemPrompt = `Translate the user's text into ${targetLangLabel}. Make it sound highly natural, conversational, and colloquial (informal spoken style). Capture the exact emotion and tone of the original message. Provide ONLY the translation, without any extra text, quotes, or explanations. Translate completely without omitting anything.`;
+
+    const key = `${chatId}:${messageIndex}`;
+    const previousTranslation = msg.translation || '';
+    state.translatingMessages[key] = true;
+    setMessageTranslationLoading(chatId, messageIndex, true);
+
+    try {
+        const resp = await fetch(state.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: state.apiModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: msg.content }
+                ],
+                temperature: 0.4
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error?.message || `HTTP ${resp.status}`);
         }
-        showToast('success', 'Message copied');
-        return;
-    }
 
-    if (action === 'delete') {
-        openDeleteMessageModal(target.chatId, target.messageIndex);
-        return;
-    }
+        const data = await resp.json();
+        const translation = String(data.choices?.[0]?.message?.content || '').trim();
+        if (!translation) throw new Error('Empty translation returned');
 
-    if (action === 'translate') {
-        translateMessage(target.chatId, target.messageIndex);
-        return;
-    }
+        // ذخیره ترجمه در جای درست
+        if (messageIndex === 'intro') {
+            const char = getCharacterForChat(chatId);
+            if (char) {
+                char.descriptionTranslation = translation;
+                if (state.characters[char.id]) {
+                    state.characters[char.id].descriptionTranslation = translation;
+                }
+            }
+        } else {
+            msg.translation = translation;
+        }
 
-    if (action === 'branch') {
-        createBranchFromMessage(target.chatId, target.messageIndex);
-        return;
+        saveData();
+        setMessageTranslationLoading(chatId, messageIndex, false, translation);
+        showToast('success', 'Message translated');
+    } catch (err) {
+        if (previousTranslation) {
+            if (messageIndex === 'intro') {
+                const char = getCharacterForChat(chatId);
+                if (char) char.descriptionTranslation = previousTranslation;
+            } else {
+                msg.translation = previousTranslation;
+            }
+            setMessageTranslationLoading(chatId, messageIndex, false, previousTranslation);
+        } else {
+            setMessageTranslationLoading(chatId, messageIndex, false);
+        }
+        console.error('Translate error:', err);
+        showToast('error', `Translate failed: ${err.message}`);
+    } finally {
+        delete state.translatingMessages[key];
     }
 }
 
