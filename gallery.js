@@ -213,11 +213,8 @@ function createCard(item) {
 
 function buildRicherShortDescription(char) {
   const desc = (char.description || '').trim();
-  const world = (char.world || '').trim();
   const title = (char.title || '').trim();
-  // Aim for “a bit more”, but not a wall of text.
   let out = desc || '';
-  if (out.length < 70 && world) out = out ? `${out} — ${world}` : world;
   if (!out && title) out = title;
   if (!out) out = 'A CharacterVerse persona ready to chat.';
   return smartTrim(out, 180);
@@ -407,7 +404,7 @@ function openModal(item) {
   av.innerHTML = avatarHtml;
 
   title.textContent = char.name || 'Unnamed';
-  sub.textContent = [char.title, char.world].filter(Boolean).join(' • ') || '—';
+  sub.textContent = char.title || '—';
   desc.textContent = (char.description || buildRicherShortDescription(char)).trim();
   open.textContent = (char.greeting || '').trim() || '—';
 
