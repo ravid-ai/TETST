@@ -5437,3 +5437,28 @@ img {
 [dir="rtl"] .setting-action-group {
     justify-content: flex-start;
 }
+
+/* ===== Character Intro Box ===== */
+.char-intro-box {
+    margin-bottom: 24px;
+}
+
+.char-intro-box .message-bubble {
+    opacity: 0.70;
+    /* شفافیت کادر پیام */
+    border: 1px dashed var(--border-strong);
+    background: rgba(255, 255, 255, 0.02);
+    font-style: italic;
+}
+
+.char-intro-box .message-sender {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.char-intro-box .message-avatar {
+    opacity: 0.75;
+    filter: grayscale(20%);
+}
