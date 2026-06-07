@@ -853,15 +853,22 @@ async function translateMessage(chatId, messageIndex) {
         return;
     }
 
-    const history = state.chatHistory[chatId] || [];
-    const msg = history[messageIndex];
+    // تشخیص اینکه متن چته یا دیسکریپشن کاراکتر
+    let msg;
+    if (messageIndex === 'intro') {
+        const char = getCharacterForChat(chatId);
+        if (!char) return;
+        msg = { content: char.description, translation: char.descriptionTranslation || '' };
+    } else {
+        const history = state.chatHistory[chatId] || [];
+        msg = history[messageIndex];
+    }
+
     if (!msg || !msg.content) return;
 
     const targetLangCode = state.settings.translateLang || 'en';
     const targetLangLabel = getTranslateLanguageLabel(targetLangCode);
 
-    // پرامپت آپدیت شده برای لحن خودمونی و طبیعی
-    // دستور رو جدا کردیم و به صورت سیستم تعریفش کردیم
     const systemPrompt = `Translate the user's text into ${targetLangLabel}. Make it sound highly natural, conversational, and colloquial (informal spoken style). Capture the exact emotion and tone of the original message. Provide ONLY the translation, without any extra text, quotes, or explanations. Translate completely without omitting anything.`;
 
     const key = `${chatId}:${messageIndex}`;
@@ -879,11 +886,10 @@ async function translateMessage(chatId, messageIndex) {
             body: JSON.stringify({
                 model: state.apiModel,
                 messages: [
-                    { role: 'system', content: systemPrompt }, // دستور اصلی اینجا میره
-                    { role: 'user', content: msg.content }     // فقط متن کاربر اینجا میره
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: msg.content }
                 ],
                 temperature: 0.4
-                // max_tokens حذف شد تا محدودیت نداشته باشه
             })
         });
 
@@ -896,13 +902,30 @@ async function translateMessage(chatId, messageIndex) {
         const translation = String(data.choices?.[0]?.message?.content || '').trim();
         if (!translation) throw new Error('Empty translation returned');
 
-        msg.translation = translation;
+        // ذخیره ترجمه در جای درست
+        if (messageIndex === 'intro') {
+            const char = getCharacterForChat(chatId);
+            if (char) {
+                char.descriptionTranslation = translation;
+                if (state.characters[char.id]) {
+                    state.characters[char.id].descriptionTranslation = translation;
+                }
+            }
+        } else {
+            msg.translation = translation;
+        }
+
         saveData();
         setMessageTranslationLoading(chatId, messageIndex, false, translation);
         showToast('success', 'Message translated');
     } catch (err) {
         if (previousTranslation) {
-            msg.translation = previousTranslation;
+            if (messageIndex === 'intro') {
+                const char = getCharacterForChat(chatId);
+                if (char) char.descriptionTranslation = previousTranslation;
+            } else {
+                msg.translation = previousTranslation;
+            }
             setMessageTranslationLoading(chatId, messageIndex, false, previousTranslation);
         } else {
             setMessageTranslationLoading(chatId, messageIndex, false);
