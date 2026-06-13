@@ -882,11 +882,10 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function callAPI(char) {
     const messages = buildMessages(char);
     const body = {
-        model: state.apiModel, 
-        messages: messages,
+        model: state.apiModel, messages,
         temperature: char.temperature ?? 1.1,
-        max_tokens: char.maxTokens ?? 2042,
-        top_p: char.topP ?? 0.9
+        top_p: char.topP ?? 0.9,
+        max_tokens: char.maxTokens ?? 2042
     };
     const resp = await fetch(state.apiUrl, {
         method: 'POST',
