@@ -883,9 +883,9 @@ async function callAPI(char) {
     const messages = buildMessages(char);
     const body = {
         model: state.apiModel, messages,
-        temperature: char.temperature ?? 1.1,
-        top_p: char.topP ?? 0.9,
-        max_tokens: char.maxTokens ?? 2042
+        temperature: char.temperature ?? 0.85,
+        top_p: char.topP ?? 0.95,
+        max_tokens: char.maxTokens ?? 2048
     };
     const resp = await fetch(state.apiUrl, {
         method: 'POST',
